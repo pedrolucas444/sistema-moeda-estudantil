@@ -3,8 +3,10 @@
 ## Usuário 
 
 Como usuário, eu quero gerenciar meus dados pessoais para que eu possa atualizar, consultar ou apagar meus dados, se necessário.
+---
 
 Como usuário, eu quero poder logar no sistema para que eu possa ter acesso aos serviços disponíveis.
+
 ---
 
 ## Aluno
