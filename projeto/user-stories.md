@@ -1,10 +1,9 @@
 # User Stories
 
-## Usuário 
-
----
+## Usuário
 
 Como usuário, eu quero gerenciar meus dados pessoais para que eu possa atualizar, consultar ou apagar meus dados, se necessário.
+
 ---
 
 Como usuário, eu quero poder logar no sistema para que eu possa ter acesso aos serviços disponíveis.
@@ -29,7 +28,7 @@ Como aluno, quero poder resgatar vantagens para que eu possa usar minhas moedas 
 
 ---
 
-Como aluno, quero ser receber o código para o resgate da vantagem para que eu possa utilizá-lo presencialmente.
+Como aluno, quero receber o código para o resgate da vantagem para que eu possa utilizá-lo presencialmente.
 
 ---
 
@@ -37,14 +36,13 @@ Como aluno, quero poder consultar minhas vantagens disponíveis para que eu poss
 
 ---
 
-
 ## Professor
 
 Como professor, quero poder consultar o extrato de transações para que eu possa verificar os detalhes das moedas enviadas.
 
 ---
 
-Como professor, quero poder consultar o meu saldo de moedas para que eu possa verificar quantos moedas tenho disponíveis.
+Como professor, quero poder consultar o meu saldo de moedas para que eu possa verificar quantas moedas tenho disponíveis.
 
 ---
 
