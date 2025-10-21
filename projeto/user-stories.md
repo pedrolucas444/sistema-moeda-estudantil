@@ -2,6 +2,8 @@
 
 ## Usuário 
 
+---
+
 Como usuário, eu quero gerenciar meus dados pessoais para que eu possa atualizar, consultar ou apagar meus dados, se necessário.
 ---
 
