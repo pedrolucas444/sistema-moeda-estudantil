@@ -1,0 +1,122 @@
+@startuml
+title Diagrama de Classes 
+skinparam classAttributeIconSize 0
+
+class Usuario {
+  +id: UUID
+  +email: String
+  +senhaHash: String
+  +role: Role
+  +ativo: boolean
+}
+
+enum Role {
+  ALUNO
+  PROFESSOR
+  EMPRESA
+  ADMIN
+}
+
+class Instituicao {
+  +id: UUID
+  +nome: String
+  +cnpj: String
+  +ativa: boolean
+}
+
+class Departamento {
+  +id: UUID
+  +nome: String
+}
+
+class Professor {
+  +id: UUID
+  +nome: String
+  +cpf: String
+}
+Professor "1" -- "1" Usuario
+Professor "1" -- "1" Instituicao
+Professor "1" -- "1" Departamento
+
+class Aluno {
+  +id: UUID
+  +nome: String
+  +cpf: String
+  +rg: String
+  +endereco: String
+  +curso: String
+}
+Aluno "1" -- "1" Usuario
+Aluno "1" -- "1" Instituicao
+
+class EmpresaParceira {
+  +id: UUID
+  +nome: String
+  +cnpj: String
+  +emailComercial: String
+  +endereco: String
+  +ativa: boolean
+}
+EmpresaParceira "1" -- "1" Usuario
+
+class Vantagem {
+  +id: UUID
+  +titulo: String
+  +descricao: String
+  +custoMoedas: int
+  +fotoUrl: String
+  +ativa: boolean
+}
+EmpresaParceira "1" -- "0..*" Vantagem
+
+class Carteira {
+  +id: UUID
+  +saldo: long
+}
+Aluno "1" -- "1" Carteira : possui
+Professor "1" -- "1" Carteira : possui
+
+class Transacao {
+  +id: UUID
+  +tipo: TransacaoTipo
+  +valor: long
+  +mensagem: String
+  +createdAt: Instant
+}
+
+enum TransacaoTipo {
+  CREDITO
+  DEBITO
+}
+
+Carteira "1" -- "0..*" Transacao : entrada
+Carteira "1" -- "0..*" Transacao : saida
+Transacao "0..1" -- Professor : autorEnvio
+
+class Resgate {
+  +id: UUID
+  +codigo: String
+  +status: ResgateStatus
+  +createdAt: Instant
+  +validade: LocalDate
+}
+
+enum ResgateStatus {
+  GERADO
+  UTILIZADO
+  CANCELADO
+}
+
+Aluno "1" -- "0..*" Resgate
+Resgate "1" -- "1" Vantagem
+Resgate "1" -- "1" EmpresaParceira
+
+class CotaSemestral {
+  +id: UUID
+  +semestre: String
+  +valor: long
+  +creditadaEm: Instant
+}
+Professor "1" -- "0..*" CotaSemestral
+
+@enduml

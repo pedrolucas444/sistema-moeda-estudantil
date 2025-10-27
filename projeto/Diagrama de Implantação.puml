@@ -1,0 +1,22 @@
+@startuml
+title Diagrama de Implantação
+
+node "Cliente (Browser)" as Browser {
+  artifact "SPA/Views MVC"
+}
+
+node "Servidor de Aplicação" as App {
+  component "API/Web (Spring Boot)" as Api
+}
+
+node "Serviços Externos" as Ext {
+  component "SMTP/Email" as Smtp
+}
+
+database "PostgreSQL" as Pg
+
+Browser --> Api : HTTPS
+Api --> Pg : JDBC
+Api --> Smtp : SMTP/HTTPS
+
+@enduml
