@@ -1,0 +1,51 @@
+@startuml
+left to right direction
+actor Usuario
+actor Conta
+actor Aluno
+actor Professor
+actor EmpresaParceira
+
+rectangle "Mérito" {
+    usecase "Acessar o sistema" as UC_Acessar
+    usecase "Gerenciar perfil" as UC_Gerenciar
+    usecase "Visualizar extrato" as UC_Extrato
+    usecase "Transferir moedas" as UC_Transferir
+    usecase "Especificar motivo" as UC_Motivo
+    usecase "Receber recompensas" as UC_Recompensas
+    usecase "Resgatar benefício" as UC_Beneficio
+    usecase "Notificar via e-mail (Aluno)" as UC_NotifAluno
+    usecase "Notificar via e-mail (Professor)" as UC_NotifProf
+    usecase "Cadastrar vantagens" as UC_Vantagens
+    usecase "Inserir informações" as UC_Inserir
+    usecase "Confirmar troca de vantagem" as UC_Confirmar
+    usecase "Listar professores" as UC_Listar
+    usecase "Realizar cadastro" as UC_Cadastro
+}
+
+' Relacionamentos principais
+Usuario --> UC_Acessar
+Usuario --> UC_Gerenciar
+Conta --> UC_Extrato
+Aluno --> UC_Recompensas
+Aluno --> UC_Beneficio
+Aluno --> UC_Transferir
+Professor --> UC_Transferir
+Professor --> UC_Cadastro
+Professor --> UC_Listar
+EmpresaParceira --> UC_Vantagens
+EmpresaParceira --> UC_Confirmar
+
+' Inclusões
+UC_Transferir --> (UC_Motivo) : <<include>>
+UC_Beneficio --> (UC_NotifAluno) : <<include>>
+UC_Recompensas --> (UC_NotifProf) : <<include>>
+UC_Vantagens --> (UC_Inserir) : <<include>>
+UC_Cadastro --> (UC_Listar) : <<include>>
+
+' Notas
+note right of UC_Gerenciar
+Gerenciar perfil: incluir, excluir,
+editar e consultar dados
+end note
+@enduml
