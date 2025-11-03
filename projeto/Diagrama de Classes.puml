@@ -1,35 +1,58 @@
 @startuml
-title Diagrama de Classes
+title Diagrama de Classes Corrigido
 skinparam classAttributeIconSize 0
-skinparam class {
-  BackgroundColor White
-  ArrowColor Black
-  BorderColor Black
-}
 
-' ===== Superclasse =====
 class Usuario {
   +id: UUID
   +email: String
   +senhaHash: String
+  +role: Role
   +ativo: boolean
-  +saldo: int  ' substitui a Carteira
 }
 
-' ===== Especializações =====
-class Aluno
-class Professor
+enum Role {
+  ALUNO
+  PROFESSOR
+  EMPRESA
+  ADMIN
+}
 
-Aluno --|> Usuario
-Professor --|> Usuario
-
-' ===== Demais entidades do domínio =====
-class EmpresaParceira {
+class Instituicao {
   +id: UUID
   +nome: String
   +cnpj: String
   +ativa: boolean
 }
+
+class Professor {
+  +nome: String
+  +cpf: String
+  +saldo: long = 1000
+}
+
+class Aluno {
+  +nome: String
+  +cpf: String
+  +rg: String
+  +endereco: String
+  +curso: String
+}
+
+Usuario <|-- Professor
+Usuario <|-- Aluno
+
+Professor "1" -- "1" Instituicao
+Aluno "1" -- "1" Instituicao
+
+class EmpresaParceira {
+  +id: UUID
+  +nome: String
+  +cnpj: String
+  +emailComercial: String
+  +endereco: String
+  +ativa: boolean
+}
+Usuario <|-- EmpresaParceira
 
 class Vantagem {
   +id: UUID
@@ -39,34 +62,32 @@ class Vantagem {
   +fotoUrl: String
   +ativa: boolean
 }
+EmpresaParceira "1" -- "0..*" Vantagem
+
+class Transacao {
+  +id: UUID
+  +valor: long
+  +mensagem: String
+  +createdAt: Instant
+}
+Transacao "0..1" -- Professor : autorEnvio
+Transacao "1" -- "1" Aluno : destinatario
 
 class Resgate {
   +id: UUID
   +codigo: String
   +status: ResgateStatus
-  +solicitadoEm: Instant
-  +consumidoEm: Instant
+  +createdAt: Instant
+  +validade: LocalDate
 }
 
 enum ResgateStatus {
-  SOLICITADO
-  CONSUMIDO
+  GERADO
+  UTILIZADO
   CANCELADO
 }
 
-' ===== Histório de transações (sem enum crédito/débito) =====
-class Transacao {
-  +id: UUID
-  +valor: int    ' positivo credita, negativo debita
-  +descricao: String
-  +criadaEm: Instant
-}
-
-' ===== Relacionamentos =====
-EmpresaParceira "1" -- "0..*" Vantagem
 Aluno "1" -- "0..*" Resgate
 Resgate "1" -- "1" Vantagem
-
-Usuario "1" -- "0..*" Transacao
 
 @enduml

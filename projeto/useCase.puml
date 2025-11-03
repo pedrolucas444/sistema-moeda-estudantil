@@ -1,10 +1,13 @@
 @startuml
 left to right direction
+
 actor Usuario
-actor Conta
-actor Aluno
 actor Professor
+actor Aluno
 actor EmpresaParceira
+
+Usuario <|-- Professor
+Usuario <|-- Aluno
 
 rectangle "Mérito" {
     usecase "Acessar o sistema" as UC_Acessar
@@ -26,13 +29,16 @@ rectangle "Mérito" {
 ' Relacionamentos principais
 Usuario --> UC_Acessar
 Usuario --> UC_Gerenciar
-Conta --> UC_Extrato
+Usuario --> UC_Extrato
+
 Aluno --> UC_Recompensas
 Aluno --> UC_Beneficio
 Aluno --> UC_Transferir
+
 Professor --> UC_Transferir
 Professor --> UC_Cadastro
 Professor --> UC_Listar
+
 EmpresaParceira --> UC_Vantagens
 EmpresaParceira --> UC_Confirmar
 
@@ -43,9 +49,10 @@ UC_Recompensas --> (UC_NotifProf) : <<include>>
 UC_Vantagens --> (UC_Inserir) : <<include>>
 UC_Cadastro --> (UC_Listar) : <<include>>
 
-' Notas
+' Nota explicativa
 note right of UC_Gerenciar
 Gerenciar perfil: incluir, excluir,
 editar e consultar dados
 end note
+
 @enduml
