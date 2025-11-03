@@ -1,124 +1,68 @@
 @startuml
-title Modelo ER 
+title Mapeamento do Diagrama de Classe para o Modelo ER
 
 entity USUARIO {
-  * id : UUID
+  * id: UUID
   --
-  email : varchar(180)
-  senha_hash : varchar(255)
-  role : varchar(20)
-  ativo : boolean
-}
-
-entity INSTITUICAO {
-  * id : UUID
-  --
-  nome : varchar(120)
-  cnpj : varchar(18)
-  ativa : boolean
-}
-
-entity DEPARTAMENTO {
-  * id : UUID
-  --
-  nome : varchar(120)
-}
-
-entity PROFESSOR {
-  * id : UUID
-  --
-  usuario_id : UUID
-  instituicao_id : UUID
-  departamento_id : UUID
-  nome : varchar(120)
-  cpf : varchar(14)
+  email: varchar(180)
+  senha_hash: varchar(255)
+  ativo: boolean
+  saldo: int
 }
 
 entity ALUNO {
-  * id : UUID
+  * id: UUID <<PK/FK USUARIO.id>>
+}
+
+entity PROFESSOR {
+  * id: UUID <<PK/FK USUARIO.id>>
   --
-  usuario_id : UUID
-  instituicao_id : UUID
-  nome : varchar(120)
-  cpf : varchar(14)
-  rg : varchar(20)
-  endereco : text
-  curso : varchar(120)
+  saldo_inicial: int <<DEFAULT 1000>>
 }
 
 entity EMPRESA {
-  * id : UUID
+  * id: UUID
   --
-  usuario_id : UUID
-  nome : varchar(120)
-  cnpj : varchar(18)
-  email_comercial : varchar(180)
-  endereco : text
-  ativa : boolean
+  nome: varchar(120)
+  cnpj: varchar(18)
+  ativa: boolean
 }
 
 entity VANTAGEM {
-  * id : UUID
+  * id: UUID
   --
-  empresa_id : UUID
-  titulo : varchar(120)
-  descricao : text
-  custo_moedas : int
-  foto_url : varchar(255)
-  ativa : boolean
-}
-
-entity CARTEIRA {
-  * id : UUID
-  --
-  saldo : bigint
-  dono_tipo : varchar(20)   // ALUNO ou PROFESSOR
-  dono_id : UUID
-}
-
-entity TRANSACAO {
-  * id : UUID
-  --
-  tipo : varchar(10)        // CREDITO ou DEBITO
-  valor : bigint
-  mensagem : text
-  created_at : timestamp
-  carteira_origem_id : UUID
-  carteira_destino_id : UUID
-  autor_professor_id : UUID
+  titulo: varchar(120)
+  descricao: text
+  custo_moedas: int
+  foto_url: text
+  ativa: boolean
+  empresa_id: UUID <<FK EMPRESA.id>>
 }
 
 entity RESGATE {
-  * id : UUID
+  * id: UUID
   --
-  aluno_id : UUID
-  vantagem_id : UUID
-  empresa_id : UUID
-  codigo : varchar(16)
-  status : varchar(12)
-  created_at : timestamp
-  validade : date
+  codigo: varchar(40)
+  status: varchar(20)
+  solicitado_em: timestamp
+  consumido_em: timestamp
+  aluno_id: UUID <<FK ALUNO.id>>
+  vantagem_id: UUID <<FK VANTAGEM.id>>
 }
 
-entity COTA_SEMESTRAL {
-  * id : UUID
+entity TRANSACAO {
+  * id: UUID
   --
-  professor_id : UUID
-  semestre : varchar(7)
-  valor : bigint
-  creditada_em : timestamp
+  usuario_id: UUID <<FK USUARIO.id>>
+  valor: int        -- positivo = crédito, negativo = débito
+  descricao: text
+  criada_em: timestamp
 }
 
-USUARIO ||--o{ PROFESSOR
-USUARIO ||--o{ ALUNO
-USUARIO ||--o{ EMPRESA
-INSTITUICAO ||--o{ ALUNO
-INSTITUICAO ||--o{ PROFESSOR
-DEPARTAMENTO ||--o{ PROFESSOR
+' ===== Relacionamentos =====
 EMPRESA ||--o{ VANTAGEM
 ALUNO ||--o{ RESGATE
 VANTAGEM ||--o{ RESGATE
-EMPRESA ||--o{ RESGATE
-PROFESSOR ||--o{ COTA_SEMESTRAL
-CARTEIRA ||--o{ TRANSACAO
+USUARIO ||--o{ TRANSACAO
+
 @enduml

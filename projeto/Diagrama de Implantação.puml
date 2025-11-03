@@ -7,6 +7,7 @@ node "Cliente (Browser)" as Browser {
 
 node "Servidor de Aplicação" as App {
   component "API/Web (Spring Boot)" as Api
+  component "Persistência (JPA/JDBC/DAOs)" as Persist
 }
 
 node "Serviços Externos" as Ext {
@@ -15,8 +16,10 @@ node "Serviços Externos" as Ext {
 
 database "PostgreSQL" as Pg
 
+' ===== Comunicação =====
 Browser --> Api : HTTPS
-Api --> Pg : JDBC
+Api --> Persist : Repositórios / DAOs
+Persist --> Pg : JDBC
 Api --> Smtp : SMTP/HTTPS
 
 @enduml

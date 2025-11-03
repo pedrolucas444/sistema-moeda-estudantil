@@ -1,63 +1,35 @@
 @startuml
-title Diagrama de Classes 
+title Diagrama de Classes
 skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor White
+  ArrowColor Black
+  BorderColor Black
+}
 
+' ===== Superclasse =====
 class Usuario {
   +id: UUID
   +email: String
   +senhaHash: String
-  +role: Role
   +ativo: boolean
+  +saldo: int  ' substitui a Carteira
 }
 
-enum Role {
-  ALUNO
-  PROFESSOR
-  EMPRESA
-  ADMIN
-}
+' ===== Especializações =====
+class Aluno
+class Professor
 
-class Instituicao {
-  +id: UUID
-  +nome: String
-  +cnpj: String
-  +ativa: boolean
-}
+Aluno --|> Usuario
+Professor --|> Usuario
 
-class Departamento {
-  +id: UUID
-  +nome: String
-}
-
-class Professor {
-  +id: UUID
-  +nome: String
-  +cpf: String
-}
-Professor "1" -- "1" Usuario
-Professor "1" -- "1" Instituicao
-Professor "1" -- "1" Departamento
-
-class Aluno {
-  +id: UUID
-  +nome: String
-  +cpf: String
-  +rg: String
-  +endereco: String
-  +curso: String
-}
-Aluno "1" -- "1" Usuario
-Aluno "1" -- "1" Instituicao
-
+' ===== Demais entidades do domínio =====
 class EmpresaParceira {
   +id: UUID
   +nome: String
   +cnpj: String
-  +emailComercial: String
-  +endereco: String
   +ativa: boolean
 }
-EmpresaParceira "1" -- "1" Usuario
 
 class Vantagem {
   +id: UUID
@@ -67,56 +39,34 @@ class Vantagem {
   +fotoUrl: String
   +ativa: boolean
 }
-EmpresaParceira "1" -- "0..*" Vantagem
-
-class Carteira {
-  +id: UUID
-  +saldo: long
-}
-Aluno "1" -- "1" Carteira : possui
-Professor "1" -- "1" Carteira : possui
-
-class Transacao {
-  +id: UUID
-  +tipo: TransacaoTipo
-  +valor: long
-  +mensagem: String
-  +createdAt: Instant
-}
-
-enum TransacaoTipo {
-  CREDITO
-  DEBITO
-}
-
-Carteira "1" -- "0..*" Transacao : entrada
-Carteira "1" -- "0..*" Transacao : saida
-Transacao "0..1" -- Professor : autorEnvio
 
 class Resgate {
   +id: UUID
   +codigo: String
   +status: ResgateStatus
-  +createdAt: Instant
-  +validade: LocalDate
+  +solicitadoEm: Instant
+  +consumidoEm: Instant
 }
 
 enum ResgateStatus {
-  GERADO
-  UTILIZADO
+  SOLICITADO
+  CONSUMIDO
   CANCELADO
 }
 
+' ===== Histório de transações (sem enum crédito/débito) =====
+class Transacao {
+  +id: UUID
+  +valor: int    ' positivo credita, negativo debita
+  +descricao: String
+  +criadaEm: Instant
+}
+
+' ===== Relacionamentos =====
+EmpresaParceira "1" -- "0..*" Vantagem
 Aluno "1" -- "0..*" Resgate
 Resgate "1" -- "1" Vantagem
-Resgate "1" -- "1" EmpresaParceira
 
-class CotaSemestral {
-  +id: UUID
-  +semestre: String
-  +valor: long
-  +creditadaEm: Instant
-}
-Professor "1" -- "0..*" CotaSemestral
+Usuario "1" -- "0..*" Transacao
 
 @enduml
