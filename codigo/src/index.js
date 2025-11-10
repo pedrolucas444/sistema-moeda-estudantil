@@ -7,6 +7,9 @@ const AlunoController = require('./controllers/AlunoController');
 const EmpresaController = require('./controllers/EmpresaController');
 const makeAlunoRouter = require('./routes/alunos');
 const makeEmpresaRouter = require('./routes/empresas');
+const VantagemDAO = require('./dao/VantagemDAO');
+const VantagemController = require('./controllers/VantagemController');
+const makeVantagemRouter = require('./routes/vantagens');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,14 +24,18 @@ async function start() {
 	// DAOs
 	const alunoDao = new AlunoDAO(db);
 	const empresaDao = new EmpresaDAO(db);
-
+	const vantagemDao = new VantagemDAO(db);
+	
+	
 	// Controllers
 	const alunoController = new AlunoController(alunoDao);
 	const empresaController = new EmpresaController(empresaDao);
+	const vantagemController = new VantagemController(vantagemDao);
 
 	// Routes (controllers injected) - MVC
 	app.use('/alunos', makeAlunoRouter(alunoController));
 	app.use('/empresas', makeEmpresaRouter(empresaController));
+	app.use('/vantagens', makeVantagemRouter(vantagemController));
 
 	app.get('/', (req, res) => res.json({ ok: true, now: new Date().toISOString() }));
 
