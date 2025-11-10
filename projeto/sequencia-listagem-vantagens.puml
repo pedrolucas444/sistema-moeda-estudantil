@@ -1,0 +1,20 @@
+@startuml
+
+actor "Cliente" as cliente
+participant ":Vantagem" as vantagem
+participant ":VantagemRouter" as vantagemRouter
+participant ":VantagemController" as vantagemController
+participant ":VantagemDAO" as vantagemDAO
+
+ref over cliente, vantagem: login bem-sucedido
+
+cliente -> vantagem : listarVantagens()
+vantagem -> vantagemRouter : GET: /listar
+vantagemRouter -> vantagemController : listarTodas()
+vantagemController -> vantagemDAO : listarTodas()
+vantagemDAO --> vantagemController : vantagens: Vantagem[]
+vantagemDAO --> vantagemController : [erro] Erro ao obter vantagens
+vantagemController --> vantagemRouter : resposta HTTP
+vantagemRouter --> cliente : lista de vantagens ou mensagem de erro
+
+@enduml

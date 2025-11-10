@@ -1,0 +1,25 @@
+@startuml
+actor "Empresa" as empresa
+participant ":Vantagem" as vantagem
+participant ":VantagemRouter" as vantagemRouter
+participant ":VantagemController" as vantagemController
+participant ":VantagemDAO" as vantagemDAO
+
+ref over empresa, vantagem: login bem-sucedido
+
+opt usuário é empresa ou instituição
+    empresa -> vantagem : registrarVantagem(Vantagem)
+    vantagem -> vantagemRouter : POST /
+    vantagemRouter -> vantagemController : criar(Vantagem)
+    
+    alt campos obrigatórios nulos ou preço <= 0
+        vantagemController --> vantagemRouter : Erro de validação
+    else
+        vantagemController -> vantagemDAO : criar(Vantagem)
+        vantagemDAO --> vantagemController : sucesso ou erro
+        vantagemController --> vantagemRouter : resultado da criação
+    end
+
+    vantagemRouter --> empresa : mensagem final (sucesso ou erro)
+end
+@enduml
