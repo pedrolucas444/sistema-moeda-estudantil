@@ -1,0 +1,151 @@
+import { useState } from "react";
+import { api } from "../services/api";
+
+export function CadastroVantagemEmpresa() {
+  const [form, setForm] = useState({
+    empresa_id: "",
+    titulo: "",
+    descricao: "",
+    custo_moedas: "",
+    foto_url: "",
+  });
+
+  const [mensagem, setMensagem] = useState(null);
+  const [carregando, setCarregando] = useState(false);
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setMensagem(null);
+    setCarregando(true);
+
+    try {
+      const payload = {
+        empresa_id: form.empresa_id,
+        titulo: form.titulo,
+        descricao: form.descricao || undefined,
+        custo_moedas: Number(form.custo_moedas),
+        foto_url: form.foto_url || undefined,
+      };
+
+      const resp = await api.post("/vantagens", payload);
+      setMensagem(`Vantagem cadastrada com sucesso! ID: ${resp.data.id}`);
+
+      setForm((prev) => ({
+        ...prev,
+        titulo: "",
+        descricao: "",
+        custo_moedas: "",
+        foto_url: "",
+      }));
+    } catch (err) {
+      console.error(err);
+      const msg = err.response?.data?.error || "Erro ao cadastrar vantagem.";
+      setMensagem(msg);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  return (
+    <div className="flex justify-center items-center min-h-[80vh] bg-slate-950 text-white">
+      <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl w-full max-w-lg">
+        <h1 className="text-3xl font-bold mb-6 text-center text-blue-400">
+          Cadastro de Vantagem (Empresa)
+        </h1>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="block mb-1 font-medium text-sm text-slate-300">
+              Empresa ID
+            </label>
+            <input
+              name="empresa_id"
+              value={form.empresa_id}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Informe o ID da empresa"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium text-sm text-slate-300">
+              Título
+            </label>
+            <input
+              name="titulo"
+              value={form.titulo}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ex: Desconto na Cantina"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium text-sm text-slate-300">
+              Descrição
+            </label>
+            <textarea
+              name="descricao"
+              value={form.descricao}
+              onChange={handleChange}
+              rows="3"
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Descreva o benefício"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium text-sm text-slate-300">
+              Custo em moedas
+            </label>
+            <input
+              type="number"
+              name="custo_moedas"
+              value={form.custo_moedas}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ex: 200"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium text-sm text-slate-300">
+              URL da foto
+            </label>
+            <input
+              name="foto_url"
+              value={form.foto_url}
+              onChange={handleChange}
+              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://exemplo.com/imagem.png"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={carregando}
+            className={`mt-4 py-2 rounded-lg font-semibold transition-all ${
+              carregando
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-500"
+            }`}
+          >
+            {carregando ? "Salvando..." : "Cadastrar vantagem"}
+          </button>
+        </form>
+
+        {mensagem && (
+          <p className="mt-4 text-center text-sm text-slate-300">{mensagem}</p>
+        )}
+      </div>
+    </div>
+  );
+}
