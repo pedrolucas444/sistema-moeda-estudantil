@@ -11,6 +11,8 @@ const makeEmpresaRouter = require("./routes/empresas");
 const VantagemDAO = require("./dao/VantagemDAO");
 const VantagemController = require("./controllers/VantagemController");
 const makeVantagemRouter = require("./routes/vantagens");
+const AuthController = require("./controllers/AuthController");
+const makeAuthRouter = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,10 +33,12 @@ async function start() {
   const alunoController = new AlunoController(alunoDao);
   const empresaController = new EmpresaController(empresaDao);
   const vantagemController = new VantagemController(vantagemDao);
+  const authController = new AuthController({ empresaDao, alunoDao, jwtSecret: process.env.JWT_SECRET });
 
   app.use("/alunos", makeAlunoRouter(alunoController));
   app.use("/empresas", makeEmpresaRouter(empresaController));
   app.use("/vantagens", makeVantagemRouter(vantagemController));
+  app.use("/auth", makeAuthRouter(authController));
 
   app.get("/", (req, res) =>
     res.json({ ok: true, now: new Date().toISOString() })
