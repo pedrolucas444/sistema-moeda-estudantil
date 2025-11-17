@@ -25,7 +25,8 @@ export default function CadastroAluno() {
         localStorage.setItem('token', data.token)
         localStorage.setItem('role', data.role)
       }
-      navigate('/aluno/vantagens')
+      // Após cadastro, enviar para o hub do aluno
+      navigate('/aluno/hub')
     } catch (err) {
       setError(err?.response?.data?.error || 'Falha ao cadastrar aluno')
     } finally {
@@ -35,6 +36,16 @@ export default function CadastroAluno() {
 
   return (
     <div className="max-w-lg mx-auto bg-white dark:bg-slate-900 shadow rounded p-6">
+      <div className="mb-3">
+        <button
+          onClick={() => navigate('/')}
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
+          aria-label="Voltar para início"
+        >
+          <span className="text-xl">←</span>
+          <span>Voltar</span>
+        </button>
+      </div>
       <h1 className="text-2xl font-bold mb-4">Cadastro de Aluno</h1>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
         <div>

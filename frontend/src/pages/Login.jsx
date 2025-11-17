@@ -23,9 +23,9 @@ export default function Login() {
         localStorage.setItem('token', data.token)
         localStorage.setItem('role', data.role)
       }
-      // Redireciona baseado no papel
-      if (data.role === 'empresa') navigate('/empresa/vantagens')
-      else navigate('/aluno/vantagens')
+  // Redireciona para o hub do respectivo papel (hub mostra botão da funcionalidade + logout)
+  if (data.role === 'empresa') navigate('/empresa/hub')
+  else navigate('/aluno/hub')
     } catch (err) {
       setError(err?.response?.data?.error || 'Falha no login')
     } finally {
@@ -35,6 +35,16 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto bg-white dark:bg-slate-900 shadow rounded p-6">
+      <div className="mb-3">
+        <button
+          onClick={() => navigate('/')}
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
+          aria-label="Voltar para início"
+        >
+          <span className="text-xl">←</span>
+          <span>Voltar</span>
+        </button>
+      </div>
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
       <div className="flex gap-2 mb-4">

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom'
 import { api } from "../services/api";
 
 export function ListaVantagensAluno() {
+  const navigate = useNavigate()
   const [vantagens, setVantagens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
@@ -45,6 +47,16 @@ export function ListaVantagensAluno() {
   return (
     <div className="min-h-[80vh] bg-slate-950 text-white py-10 px-4">
       <div className="max-w-5xl mx-auto">
+        <div className="mb-4">
+          <button
+            onClick={() => navigate('/aluno/hub')}
+            className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+            aria-label="Voltar para área do aluno"
+          >
+            <span className="text-xl">←</span>
+            <span>Voltar</span>
+          </button>
+        </div>
         <h1 className="text-3xl font-bold mb-6 text-blue-400 text-center">
           Vantagens Disponíveis
         </h1>

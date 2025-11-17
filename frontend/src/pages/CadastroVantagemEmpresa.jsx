@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom'
 import { api } from "../services/api";
 
 export function CadastroVantagemEmpresa() {
+  const navigate = useNavigate()
   const [form, setForm] = useState({
     empresa_id: "",
     titulo: "",
@@ -54,6 +56,16 @@ export function CadastroVantagemEmpresa() {
   return (
     <div className="flex justify-center items-center min-h-[80vh] bg-slate-950 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="mb-4">
+          <button
+            onClick={() => navigate('/empresa/hub')}
+            className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+            aria-label="Voltar para área da empresa"
+          >
+            <span className="text-xl">←</span>
+            <span>Voltar</span>
+          </button>
+        </div>
         <h1 className="text-3xl font-bold mb-6 text-center text-blue-400">
           Cadastro de Vantagem (Empresa)
         </h1>

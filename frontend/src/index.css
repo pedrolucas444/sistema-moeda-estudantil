@@ -26,9 +26,21 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Make the document and React root take full height and
+   use the root as a column flex container so header + main
+   stack naturally and `main` can grow. This avoids the
+   page being vertically centered/cropped. */
+html, body, #root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
