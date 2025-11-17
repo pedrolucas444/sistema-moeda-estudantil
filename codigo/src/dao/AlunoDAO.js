@@ -1,39 +1,69 @@
-const { randomUUID } = require('crypto');
-
 class AlunoDAO {
   constructor(db) {
-    this.db = db; // espera um objeto com métodos: insert, findById, findAll, update, delete
+    this.db = db;
     this.collection = 'alunos';
   }
 
-  async create(aluno) {
-    const id = aluno.id || randomUUID();
-    const now = new Date().toISOString();
-    const record = Object.assign({
+ 
+  async create(data) {
+    const {
       id,
-      nome: null,
-      cpf: null,
-      rg: null,
-      endereco: null,
-      curso: null,
-      createdAt: now
-    }, aluno);
+      nome,
+      cpf,
+      rg,
+      endereco,
+      curso,
+      email,
+      senha_hash
+    } = data || {};
 
-    await this.db.insert(this.collection, record);
-    return record;
-  }
+    if (!nome || !cpf || !rg || !endereco || !curso) {
+      throw new Error('Campos obrigatórios de aluno ausentes');
+    }
 
-  async findById(id) {
-    return this.db.findById(this.collection, id);
+    
+    const record = {
+      id,
+      nome,
+      cpf,
+      rg,
+      endereco,
+      curso,
+      email,
+      senha_hash
+    };
+
+    return this.db.insert(this.collection, record);
   }
 
   async findAll(filter = {}) {
     return this.db.findAll(this.collection, filter);
   }
 
-  async update(id, updates) {
-    const updated = await this.db.update(this.collection, id, updates);
-    return updated;
+  async findById(id) {
+    return this.db.findById(this.collection, id);
+  }
+
+  async update(id, updates = {}) {
+    
+    const allowedFields = [
+      'nome',
+      'cpf',
+      'rg',
+      'endereco',
+      'curso',
+      'email',
+      'senha_hash'
+    ];
+
+    const payload = {};
+    for (const key of allowedFields) {
+      if (Object.prototype.hasOwnProperty.call(updates, key)) {
+        payload[key] = updates[key];
+      }
+    }
+
+    return this.db.update(this.collection, id, payload);
   }
 
   async delete(id) {

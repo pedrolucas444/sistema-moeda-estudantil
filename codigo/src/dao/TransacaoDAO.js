@@ -1,22 +1,45 @@
 class TransacaoDAO {
   constructor(db) {
     this.db = db;
+    this.collection = 'transacoes'; 
   }
 
+
   async create(transacao) {
-    throw new Error('TransacaoDAO.create não implementado');
+    const { usuario_id, valor, descricao } = transacao || {};
+
+    if (!usuario_id) {
+      throw new Error('usuario_id é obrigatório para criar uma transação');
+    }
+
+    const valorInt = parseInt(valor, 10);
+    if (!Number.isInteger(valorInt) || valorInt === 0) {
+      throw new Error('valor deve ser um inteiro diferente de zero');
+    }
+
+    const agora = new Date();
+
+    const record = {
+      usuario_id,
+      valor: valorInt,
+      descricao: descricao || null,
+      criada_em: agora
+    };
+
+    const inserted = await this.db.insert(this.collection, record);
+    return inserted;
   }
 
   async findById(id) {
-    throw new Error('TransacaoDAO.findById não implementado');
+    return this.db.findById(this.collection, id);
   }
 
   async findByUsuarioId(usuarioId) {
-    throw new Error('TransacaoDAO.findByUsuarioId não implementado');
+    return this.db.findAll(this.collection, { usuario_id: usuarioId });
   }
 
-  async findAll(filter) {
-    throw new Error('TransacaoDAO.findAll não implementado');
+  async findAll(filter = {}) {
+    return this.db.findAll(this.collection, filter);
   }
 }
 
