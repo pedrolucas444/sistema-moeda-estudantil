@@ -41,6 +41,7 @@ async function start() {
   // 🔹 Instancia DAOs
   const alunoDao = new AlunoDAO(db);
   const empresaDao = new EmpresaDAO(db);
+  const professorDao = new (require('./dao/ProfessorDAO'))(db);
   const vantagemDao = new VantagemDAO(db);
   const transacaoDao = new TransacaoDAO(db);
 
@@ -51,6 +52,7 @@ async function start() {
   const authController = new AuthController({
     empresaDao,
     alunoDao,
+    professorDao,
     jwtSecret: process.env.JWT_SECRET || 'dev-secret'
   });
   const transacaoController = new TransacaoController({ transacaoDao, db });
@@ -61,6 +63,17 @@ async function start() {
   app.use('/vantagens', makeVantagemRouter(vantagemController));
   app.use('/auth', makeAuthRouter(authController));
   app.use('/transacoes', makeTransacaoRouter(transacaoController));
+
+  // Lista de instituições (para popular selects no frontend)
+  app.get('/instituicoes', async (req, res) => {
+    try {
+      const list = await db.findAll('instituicoes')
+      res.json(list)
+    } catch (err) {
+      console.error('Erro ao buscar instituicoes:', err)
+      res.status(500).json({ error: 'Erro ao buscar instituições' })
+    }
+  })
 
   // Rota básica pra testar se o servidor subiu
   app.get('/', (req, res) => {

@@ -1,0 +1,69 @@
+@startuml
+
+actor "Professor (Remetente)" as professor
+participant ":TransacaoRouter" as transacaoRouter
+participant ":TransacaoController" as transacaoController
+participant ":TransacaoDAO" as transacaoDAO
+participant ":DB" as db
+
+ref over professor, transacaoRouter: login bem-sucedido
+
+' 1) Professor envia requisição
+professor -> transacaoRouter : POST /enviar\n{ remetente_id, destinatario_id, valor, descricao }
+
+' 2) Router chama o controller
+transacaoRouter -> transacaoController : enviarMoedas(req)
+
+' 3) Controller valida campos
+transacaoController -> transacaoController : validar dados
+
+' 4) Controller busca remetente no DB
+transacaoController -> db : findById('usuarios', remetente_id)
+db --> transacaoController : remetente
+
+alt remetente não encontrado
+    transacaoController --> professor : HTTP 404 (Remetente não encontrado)
+    return
+end
+
+' 5) Controller busca destinatário no DB
+transacaoController -> db : findById('usuarios', destinatario_id)
+db --> transacaoController : destinatario
+
+alt destinatario não encontrado
+    transacaoController --> professor : HTTP 404 (Destinatário não encontrado)
+    return
+end
+
+' 6) Controller verifica saldo
+transacaoController -> transacaoController : validar saldo
+
+alt saldo insuficiente
+    transacaoController --> professor : HTTP 400 (Saldo insuficiente)
+    return
+end
+
+' 7) Atualiza saldo do remetente
+transacaoController -> db : update('usuarios', remetente_id, { saldo: novoSaldo })
+db --> transacaoController : remetenteAtualizado
+
+' 8) Atualiza saldo do destinatário
+transacaoController -> db : update('usuarios', destinatario_id, { saldo: novoSaldo })
+db --> transacaoController : destinatarioAtualizado
+
+' 9) Registra débito no DAO
+transacaoController -> transacaoDAO : create({ usuario_id: remetente_id,\nvalor: -valorInt, descricao })
+transacaoDAO -> db : insert('transacoes', registroDébito)
+db --> transacaoDAO : debitoProf
+transacaoDAO --> transacaoController : debitoProf
+
+' 10) Registra crédito no DAO
+transacaoController -> transacaoDAO : create({ usuario_id: destinatario_id,\nvalor: valorInt, descricao })
+transacaoDAO -> db : insert('transacoes', registroCrédito)
+db --> transacaoDAO : creditoAluno
+transacaoDAO --> transacaoController : creditoAluno
+
+' 11) Controller retorna sucesso
+transacaoController --> professor : HTTP 201\n{ mensagem, saldos, transações }
+
+@enduml

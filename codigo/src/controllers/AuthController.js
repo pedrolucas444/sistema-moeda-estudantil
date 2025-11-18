@@ -5,6 +5,7 @@ class AuthController {
   constructor({ empresaDao, alunoDao, jwtSecret }) {
     this.empresaDao = empresaDao;
     this.alunoDao = alunoDao;
+    this.professorDao = (arguments[0] && arguments[0].professorDao) || null;
     this.jwtSecret = jwtSecret || 'dev-secret';
 
     this.login = this.login.bind(this);
@@ -101,6 +102,69 @@ class AuthController {
           .json({ error: 'Informe email/senha ou cpf/rg' });
       }
 
+      if (role === 'professor') {
+        const { cpf, instituicao_id, email, senha } = req.body || {};
+        const db = this.empresaDao.db;
+
+        // Login via email + senha (preferred if provided)
+        if (email && senha) {
+          // For professor login by email, lookup the usuario by email (credentials live in usuario),
+          // then load the professor record by usuario.id. Do NOT query professor table by email
+          // because the professor table does not have an email column.
+          let professor = null;
+          let usuario = null;
+
+          const usuarios = await db.findAll('usuario', { email });
+          usuario = usuarios && usuarios[0];
+          if (!usuario) {
+            return res.status(401).json({ error: 'Credenciais inválidas' });
+          }
+
+          // load professor by the usuario primary key
+          const prof = await db.findById('professor', usuario.id);
+          if (!prof) {
+            return res.status(401).json({ error: 'Professor não encontrado' });
+          }
+          professor = prof;
+
+            if (!usuario) {
+              return res.status(401).json({ error: 'Usuário ligado ao professor não encontrado' });
+            }
+
+            // Use senha_hash from usuario (where credentials are stored) as primary source
+            const hash = usuario.senha_hash || usuario.senhaHash || professor.senha_hash || professor.senha || null;
+            const ok =
+              hash && typeof hash === 'string' && hash.startsWith('$2')
+                ? await bcrypt.compare(senha, hash)
+                : senha === hash;
+
+            if (!ok) {
+              return res.status(401).json({ error: 'Credenciais inválidas' });
+            }
+
+            // include linked usuario (holds saldo) so frontend can read saldo
+            const respProfessor = Object.assign({}, professor, { usuario });
+            const token = this.sign(professor, 'professor');
+            return res.json({ token, role: 'professor', professor: respProfessor, usuario });
+        }
+
+        // Fallback: existing cpf + instituicao_id flow
+        if (cpf && instituicao_id) {
+          const professores = await db.findAll('professor', { cpf, instituicao_id });
+          const professor = professores && professores[0];
+          if (!professor) {
+            return res.status(401).json({ error: 'Professor não encontrado' });
+          }
+
+          const usuario = await db.findById('usuario', professor.id);
+          const respProfessor2 = Object.assign({}, professor, { usuario });
+          const token = this.sign(professor, 'professor');
+          return res.json({ token, role: 'professor', professor: respProfessor2, usuario });
+        }
+
+        return res.status(400).json({ error: 'Informe email/senha ou cpf/instituicao_id' });
+      }
+
       return res
         .status(400)
         .json({ error: 'role inválida. Use "aluno" ou "empresa"' });
@@ -166,24 +230,41 @@ class AuthController {
         saldo: 0
       });
 
-      const aluno = await db.insert('alunos', {
-        id: usuario.id,
-        nome,
-        cpf,
-        rg,
-        endereco,
-        curso,
-        email,
-        senha_hash,
-        instituicao_id
-      });
+      // Tentar criar o registro de aluno; se falhar, removemos o usuario criado
+      // para evitar deixar um usuario sem o registro de aluno.
+      let aluno = null
+      try {
+        aluno = await db.insert('alunos', {
+          id: usuario.id,
+          nome,
+          cpf,
+          rg,
+          endereco,
+          curso,
+          instituicao_id
+        })
+      } catch (err) {
+        // Remover usuario criado para manter consistência
+        try {
+          await db.delete('usuarios', usuario.id)
+        } catch (delErr) {
+          console.error('Falha ao remover usuário após erro ao criar aluno:', delErr)
+        }
+        console.error('Erro ao criar aluno, usuário removido. Detalhe:', err)
+        // Se for violação de constraint de cpf por exemplo, retornar 409
+        if (err && err.code === '23505') {
+          return res.status(409).json({ error: 'Já existe um aluno com esses dados (violação de unicidade)' })
+        }
+        return res.status(500).json({ error: 'Erro ao criar aluno' })
+      }
 
       const token = this.sign({ id: usuario.id }, 'aluno');
 
       return res.status(201).json({
         token,
         role: 'aluno',
-        aluno
+        aluno,
+        usuario
       });
     } catch (err) {
       console.error('Erro no registerAluno:', err);

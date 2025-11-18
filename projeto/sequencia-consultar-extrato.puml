@@ -1,0 +1,37 @@
+@startuml
+
+actor "Usuário" as usuario
+participant ":TransacaoRouter" as transacaoRouter
+participant ":TransacaoController" as transacaoController
+participant ":TransacaoDAO" as transacaoDAO
+participant ":DB" as db
+
+ref over usuario, transacaoRouter: login bem-sucedido
+
+usuario -> transacaoRouter : GET /extrato/{usuarioId}
+transacaoRouter -> transacaoController : extrato(usuarioId)
+
+' 1) Controller pede ao DAO o usuário
+transacaoController -> transacaoDAO : findUsuarioById(usuarioId)
+transacaoDAO -> db : findById('usuarios', usuarioId)
+
+alt usuário encontrado
+    db --> transacaoDAO : usuario
+    transacaoDAO --> transacaoController : usuario
+else usuário não encontrado
+    db --> transacaoDAO : null
+    transacaoDAO --> transacaoController : null
+    transacaoController --> usuario : HTTP 404 (Usuário não encontrado)
+    return
+end
+
+' 2) Controller pede ao DAO as transações do usuário
+transacaoController -> transacaoDAO : findByUsuarioId(usuarioId)
+transacaoDAO -> db : findAll('transacoes', { usuario_id: usuarioId })
+db --> transacaoDAO : lista de Transacao[]
+transacaoDAO --> transacaoController : lista de Transacao[]
+
+' 3) Controller responde
+transacaoController --> usuario : extrato (usuario + transações)
+
+@enduml

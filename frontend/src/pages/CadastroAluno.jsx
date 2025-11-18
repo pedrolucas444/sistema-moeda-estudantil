@@ -1,13 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 
 export default function CadastroAluno() {
-  const [form, setForm] = useState({ nome: '', cpf: '', rg: '', endereco: '', curso: '', email: '', senha: '' })
+  const [form, setForm] = useState({ nome: '', cpf: '', rg: '', endereco: '', curso: '', email: '', senha: '', instituicao_id: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
+  const [instituicoes, setInstituicoes] = useState([])
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let mounted = true
+    async function loadInstituicoes() {
+      try {
+        const res = await api.get('/instituicoes')
+        if (mounted) setInstituicoes(res.data || [])
+      } catch (err) {
+        // não bloqueante: mantemos o campo como está se falhar
+        console.error('Erro ao carregar instituições', err?.response?.data || err.message)
+      }
+    }
+    loadInstituicoes()
+    return () => { mounted = false }
+  }, [])
 
   function onChange(e) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -79,6 +95,25 @@ export default function CadastroAluno() {
         <div>
           <label className="block text-sm mb-1">Curso</label>
           <input name="curso" value={form.curso} onChange={onChange} required className="w-full border rounded px-3 py-2" />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Instituição</label>
+          <select
+            name="instituicao_id"
+            value={form.instituicao_id}
+            onChange={onChange}
+            required
+            className="w-full border rounded px-3 py-2"
+          >
+            <option value="">Selecione a instituição</option>
+            {instituicoes.length === 0 ? (
+              <option value="" disabled>Não há instituições disponíveis</option>
+            ) : (
+              instituicoes.map((inst) => (
+                <option key={inst.id} value={inst.id}>{inst.nome}</option>
+              ))
+            )}
+          </select>
         </div>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}

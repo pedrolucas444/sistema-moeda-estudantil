@@ -4,10 +4,8 @@ import { api } from '../services/api'
 
 export default function Login() {
   const [role, setRole] = useState('aluno')
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [cpf, setCpf] = useState('')
-  const [rg, setRg] = useState('')
+    const [email, setEmail] = useState('')
+    const [senha, setSenha] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -17,15 +15,22 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const payload = role === 'empresa' ? { role, email, senha } : { role, cpf, rg }
+      const payload =
+        role === 'empresa'
+          ? { role, email, senha }
+          : role === 'professor'
+          ? { role, email, senha }
+            : { role, email, senha }
+
       const { data } = await api.post('/auth/login', payload)
       if (data?.token) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('role', data.role)
       }
-  // Redireciona para o hub do respectivo papel (hub mostra botão da funcionalidade + logout)
-  if (data.role === 'empresa') navigate('/empresa/hub')
-  else navigate('/aluno/hub')
+      // Redireciona para o hub do respectivo papel (hub mostra botão da funcionalidade + logout)
+      if (data.role === 'empresa') navigate('/empresa/hub')
+      else if (data.role === 'professor') navigate('/professor/hub')
+      else navigate('/aluno/hub')
     } catch (err) {
       setError(err?.response?.data?.error || 'Falha no login')
     } finally {
@@ -58,6 +63,11 @@ export default function Login() {
           onClick={() => setRole('empresa')}
           type="button"
         >Empresa</button>
+        <button
+          className={`px-3 py-1 rounded border ${role==='professor' ? 'bg-blue-600 text-white' : ''}`}
+          onClick={() => setRole('professor')}
+          type="button"
+        >Professor</button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -72,17 +82,28 @@ export default function Login() {
               <input className="w-full border rounded px-3 py-2" type="password" value={senha} onChange={e=>setSenha(e.target.value)} required />
             </div>
           </>
-        ) : (
-          <>
-            <div>
-              <label className="block text-sm mb-1">CPF</label>
-              <input className="w-full border rounded px-3 py-2" value={cpf} onChange={e=>setCpf(e.target.value)} required />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">RG</label>
-              <input className="w-full border rounded px-3 py-2" value={rg} onChange={e=>setRg(e.target.value)} required />
-            </div>
-          </>
+        ) : role === 'professor' ? (
+            <>
+              <div>
+                <label className="block text-sm mb-1">Email</label>
+                <input className="w-full border rounded px-3 py-2" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Senha</label>
+                <input className="w-full border rounded px-3 py-2" type="password" value={senha} onChange={e=>setSenha(e.target.value)} required />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm mb-1">Email</label>
+                <input className="w-full border rounded px-3 py-2" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Senha</label>
+                <input className="w-full border rounded px-3 py-2" type="password" value={senha} onChange={e=>setSenha(e.target.value)} required />
+              </div>
+            </>
         )}
 
         {error && <p className="text-red-600 text-sm">{error}</p>}

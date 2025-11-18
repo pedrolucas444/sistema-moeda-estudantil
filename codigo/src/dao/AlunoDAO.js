@@ -13,8 +13,7 @@ class AlunoDAO {
       rg,
       endereco,
       curso,
-      email,
-      senha_hash
+    
     } = data || {};
 
     if (!nome || !cpf || !rg || !endereco || !curso) {
@@ -28,9 +27,7 @@ class AlunoDAO {
       cpf,
       rg,
       endereco,
-      curso,
-      email,
-      senha_hash
+      curso
     };
 
     return this.db.insert(this.collection, record);
@@ -51,9 +48,7 @@ class AlunoDAO {
       'cpf',
       'rg',
       'endereco',
-      'curso',
-      'email',
-      'senha_hash'
+      'curso'
     ];
 
     const payload = {};
