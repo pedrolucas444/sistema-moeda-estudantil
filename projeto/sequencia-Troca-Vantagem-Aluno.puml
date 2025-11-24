@@ -1,0 +1,50 @@
+@startuml
+title Troca de Vantagem (Resgate) - Aluno
+
+actor Aluno
+boundary "Front-end (Aplicação Web)" as FE
+control "API / Backend\nTransacaoController" as API
+database "Postgres\n(usuario, aluno, vantagem, resgate, transacao)" as DB
+control "EmailService\n(envio de cupom)" as Mailer
+
+== Início do Caso de Uso ==
+
+Aluno -> FE: Seleciona vantagem e clica em "Resgatar"
+FE -> API: POST /transacoes/resgatar\n{ aluno_id, vantagem_id }
+
+== Validações no Backend ==
+
+API -> DB: SELECT * FROM aluno WHERE id = :aluno_id
+DB --> API: Dados do aluno
+
+API -> DB: SELECT * FROM vantagem WHERE id = :vantagem_id
+DB --> API: Dados da vantagem (custo_moedas, ativa)
+
+API -> DB: SELECT saldo FROM usuario WHERE id = :aluno_id
+DB --> API: saldoAtual
+
+API -> API: Verifica se vantagem está ativa\n e se saldoAtual >= custo_moedas
+API --> FE: 400 Saldo insuficiente / vantagem inativa\n[se falhar]
+...caso saldo suficiente...
+
+== Criação do Resgate ==
+
+API -> DB: INSERT INTO resgate(aluno_id, vantagem_id)\nVALUES (:aluno_id, :vantagem_id)
+
+DB --> API: Resgate criado (id, codigo, status, solicitado_em)
+
+API -> DB: SELECT saldo FROM usuario WHERE id = :aluno_id
+DB --> API: saldoAtualizado
+
+== Envio de E-mails (Cupom) ==
+
+API -> Mailer: enviarCupom(aluno, empresa, vantagem, codigo)
+Mailer --> API: OK (e-mails enviados)
+
+== Resposta ao Front ==
+
+API --> FE: 201 Vantagem resgatada\n{ aluno, saldoAtualizado, vantagem, resgate }
+
+FE --> Aluno: Exibe mensagem de sucesso\n e código/cupom na tela
+
+@enduml
