@@ -55,23 +55,14 @@ class TransacaoController {
         return res.status(400).json({ error: 'Saldo insuficiente' });
       }
 
-      const novoSaldoRemetente = saldoRemetente - valorInt;
-      const novoSaldoDestinatario = saldoDestinatario + valorInt;
+      // Há triggers no banco que atualizam o saldo quando uma
+      // transação é inserida (ver `tg_transacao_ins` em
+      // codigo/db/functions_triggers.sql). Para evitar a
+      // aplicação dupla da dedução/crédito (atualização manual
+      // + trigger), não atualizamos o saldo aqui.
 
-      const remetenteAtualizado = await this.db.update(
-        'usuarios',
-        remetente.id,
-        {
-          saldo: novoSaldoRemetente
-        }
-      );
-
-      const destinatarioAtualizado = await this.db.update(
-        'usuarios',
-        destinatario.id,
-        { saldo: novoSaldoDestinatario }
-      );
-
+      // Insere as transações (débito do remetente e crédito do
+      // destinatário). O trigger atualizará os saldos.
       const debitoProf = await this.transacaoDao.create({
         usuario_id: remetente.id,
         valor: -valorInt,
@@ -83,6 +74,10 @@ class TransacaoController {
         valor: valorInt,
         descricao: descricao || 'Recebimento de moedas'
       });
+
+      // Busca os saldos atualizados após a inserção das transações
+      const remetenteAtualizado = await this.db.findById('usuarios', remetente.id);
+      const destinatarioAtualizado = await this.db.findById('usuarios', destinatario.id);
 
       return res.status(201).json({
         mensagem: 'Moedas enviadas com sucesso',

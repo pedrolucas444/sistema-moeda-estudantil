@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import PrimaryButton from '../components/PrimaryButton'
 
 export default function Login() {
   const [role, setRole] = useState('aluno')
@@ -41,33 +42,17 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto bg-white dark:bg-slate-900 shadow rounded p-6">
       <div className="mb-3">
-        <button
-          onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
-          aria-label="Voltar para início"
-        >
+        <PrimaryButton inline onClick={() => navigate('/')} className="text-sm" aria-label="Voltar para início">
           <span className="text-xl">←</span>
           <span>Voltar</span>
-        </button>
+        </PrimaryButton>
       </div>
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
       <div className="flex gap-2 mb-4">
-        <button
-          className={`px-3 py-1 rounded border ${role==='aluno' ? 'bg-blue-600 text-white' : ''}`}
-          onClick={() => setRole('aluno')}
-          type="button"
-        >Aluno</button>
-        <button
-          className={`px-3 py-1 rounded border ${role==='empresa' ? 'bg-blue-600 text-white' : ''}`}
-          onClick={() => setRole('empresa')}
-          type="button"
-        >Empresa</button>
-        <button
-          className={`px-3 py-1 rounded border ${role==='professor' ? 'bg-blue-600 text-white' : ''}`}
-          onClick={() => setRole('professor')}
-          type="button"
-        >Professor</button>
+        <PrimaryButton inline onClick={() => setRole('aluno')} className={`${role==='aluno' ? 'bg-linear-to-r from-blue-800 to-blue-900' : 'bg-transparent text-slate-700 border'}`}>Aluno</PrimaryButton>
+        <PrimaryButton inline onClick={() => setRole('empresa')} className={`${role==='empresa' ? 'bg-linear-to-r from-blue-800 to-blue-900' : 'bg-transparent text-slate-700 border'}`}>Empresa</PrimaryButton>
+        <PrimaryButton inline onClick={() => setRole('professor')} className={`${role==='professor' ? 'bg-linear-to-r from-blue-800 to-blue-900' : 'bg-transparent text-slate-700 border'}`}>Professor</PrimaryButton>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -108,9 +93,7 @@ export default function Login() {
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
 
-        <button disabled={loading} className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-60">
-          {loading ? 'Entrando...' : 'Entrar'}
-        </button>
+        <PrimaryButton type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</PrimaryButton>
       </form>
     </div>
   )

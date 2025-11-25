@@ -1,6 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom'
 import { api } from "../services/api";
+import PrimaryButton from '../components/PrimaryButton'
+
+function decodeTokenId(token) {
+  try {
+    const parts = token.split('.')
+    if (parts.length < 2) return null
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return payload && payload.id
+  } catch {
+    return null
+  }
+}
 
 export function CadastroVantagemEmpresa() {
   const navigate = useNavigate()
@@ -11,6 +23,18 @@ export function CadastroVantagemEmpresa() {
     custo_moedas: "",
     foto_url: "",
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const role = localStorage.getItem('role')
+    if (!token || role !== 'empresa') {
+      navigate('/login')
+      return
+    }
+
+    const id = decodeTokenId(token)
+    if (id) setForm((prev) => ({ ...prev, empresa_id: id }))
+  }, [navigate])
 
   const [mensagem, setMensagem] = useState(null);
   const [carregando, setCarregando] = useState(false);
@@ -57,33 +81,17 @@ export function CadastroVantagemEmpresa() {
     <div className="flex justify-center items-center min-h-[80vh] bg-slate-950 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="mb-4">
-          <button
-            onClick={() => navigate('/empresa/hub')}
-            className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
-            aria-label="Voltar para área da empresa"
-          >
+          <PrimaryButton inline onClick={() => navigate('/empresa/hub')} className="text-sm" aria-label="Voltar para área da empresa">
             <span className="text-xl">←</span>
             <span>Voltar</span>
-          </button>
+          </PrimaryButton>
         </div>
         <h1 className="text-3xl font-bold mb-6 text-center text-blue-400">
           Cadastro de Vantagem (Empresa)
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block mb-1 font-medium text-sm text-slate-300">
-              Empresa ID
-            </label>
-            <input
-              name="empresa_id"
-              value={form.empresa_id}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Informe o ID da empresa"
-            />
-          </div>
+          {/* Empresa ID é preenchido automaticamente a partir do token da sessão */}
 
           <div>
             <label className="block mb-1 font-medium text-sm text-slate-300">
@@ -141,17 +149,7 @@ export function CadastroVantagemEmpresa() {
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={carregando}
-            className={`mt-4 py-2 rounded-lg font-semibold transition-all ${
-              carregando
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-500"
-            }`}
-          >
-            {carregando ? "Salvando..." : "Cadastrar vantagem"}
-          </button>
+          <PrimaryButton type="submit" disabled={carregando} className="mt-4 font-semibold">{carregando ? 'Salvando...' : 'Cadastrar vantagem'}</PrimaryButton>
         </form>
 
         {mensagem && (

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import PrimaryButton from '../components/PrimaryButton'
 
 function decodeTokenId(token) {
   try {
@@ -58,10 +59,10 @@ export default function ExtratoProfessor() {
   return (
     <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 shadow rounded p-6">
       <div className="mb-4">
-        <button onClick={handleBack} className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700">
+        <PrimaryButton inline onClick={handleBack} className="text-sm">
           <span className="text-xl">←</span>
           <span>Voltar</span>
-        </button>
+        </PrimaryButton>
       </div>
 
       <h1 className="text-2xl font-bold mb-4">Extrato do Professor</h1>

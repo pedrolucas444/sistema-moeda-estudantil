@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom'
 import { api } from "../services/api";
+import PrimaryButton from '../components/PrimaryButton'
+
+function decodeTokenId(token) {
+  try {
+    const parts = token.split('.')
+    if (parts.length < 2) return null
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return payload && payload.id
+  } catch {
+    return null
+  }
+}
 
 export function ListaVantagensAluno() {
   const navigate = useNavigate()
@@ -28,6 +40,28 @@ export function ListaVantagensAluno() {
     carregar();
   }, []);
 
+  const usuarioId = decodeTokenId(localStorage.getItem('token'))
+
+  async function handleResgatar(vantagemId) {
+    setErro(null)
+    if (!usuarioId) return setErro('Usuário não autenticado')
+
+    try {
+      const { data } = await api.post('/transacoes/resgatar', {
+        aluno_id: usuarioId,
+        vantagem_id: vantagemId
+      })
+
+      // remove da lista local para refletir resgate
+      setVantagens((prev) => prev.filter((v) => v.id !== vantagemId))
+
+      alert(data?.mensagem || 'Vantagem resgatada com sucesso')
+    } catch (err) {
+      console.error('Erro ao resgatar vantagem', err)
+      setErro(err.response?.data?.error || 'Falha ao resgatar vantagem')
+    }
+  }
+
   if (carregando) {
     return (
       <div className="flex items-center justify-center min-h-[80vh] bg-slate-950">
@@ -48,14 +82,10 @@ export function ListaVantagensAluno() {
     <div className="min-h-[80vh] bg-slate-950 text-white py-10 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="mb-4">
-          <button
-            onClick={() => navigate('/aluno/hub')}
-            className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
-            aria-label="Voltar para área do aluno"
-          >
+          <PrimaryButton inline onClick={() => navigate('/aluno/hub')} className="text-sm" aria-label="Voltar para área do aluno">
             <span className="text-xl">←</span>
             <span>Voltar</span>
-          </button>
+          </PrimaryButton>
         </div>
         <h1 className="text-3xl font-bold mb-6 text-blue-400 text-center">
           Vantagens Disponíveis
@@ -97,14 +127,8 @@ export function ListaVantagensAluno() {
                   <p className="text-sm text-slate-400 mt-1">{v.descricao}</p>
                 )}
 
-                {/* Placeholder pra futuro botão de troca */}
                 <div className="mt-4">
-                  <button
-                    disabled
-                    className="w-full py-2 rounded-lg bg-blue-600/40 text-blue-200 text-sm font-semibold cursor-not-allowed"
-                  >
-                    Trocar (em breve)
-                  </button>
+                  <PrimaryButton onClick={() => handleResgatar(v.id)} className="text-sm font-semibold">Trocar</PrimaryButton>
                 </div>
               </div>
             </div>

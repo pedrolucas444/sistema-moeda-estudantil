@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import PrimaryButton from '../components/PrimaryButton'
 
 function decodeTokenId(token) {
   try {
@@ -82,10 +83,10 @@ export default function EnviarMoedasProfessor() {
   return (
     <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 shadow rounded p-6">
       <div className="mb-4">
-        <button onClick={() => navigate('/professor/hub')} className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700">
+        <PrimaryButton inline onClick={() => navigate('/professor/hub')} className="text-sm">
           <span className="text-xl">←</span>
           <span>Voltar</span>
-        </button>
+        </PrimaryButton>
       </div>
 
       <h1 className="text-2xl font-bold mb-4">Enviar Moedas — Professor</h1>
@@ -122,8 +123,8 @@ export default function EnviarMoedasProfessor() {
             {error && <p className="text-red-600">{error}</p>}
 
             <div className="flex gap-2">
-              <button disabled={sending} className="bg-blue-600 text-white rounded px-4 py-2">{sending ? 'Enviando...' : 'Enviar'}</button>
-              <button type="button" onClick={() => { setSelected(null); setValor(''); setDescricao(''); }} className="bg-white border rounded px-4 py-2">Limpar</button>
+              <PrimaryButton type="submit" disabled={sending} className="px-4">{sending ? 'Enviando...' : 'Enviar'}</PrimaryButton>
+              <PrimaryButton type="button" onClick={() => { setSelected(null); setValor(''); setDescricao(''); }} className="bg-white text-blue-600 border px-4">Limpar</PrimaryButton>
             </div>
           </form>
         </div>

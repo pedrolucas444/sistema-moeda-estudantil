@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
+import PrimaryButton from '../components/PrimaryButton'
 
 export default function CadastroAluno() {
   const [form, setForm] = useState({ nome: '', cpf: '', rg: '', endereco: '', curso: '', email: '', senha: '', instituicao_id: '' })
@@ -53,14 +54,10 @@ export default function CadastroAluno() {
   return (
     <div className="max-w-lg mx-auto bg-white dark:bg-slate-900 shadow rounded p-6">
       <div className="mb-3">
-        <button
-          onClick={() => navigate('/')}
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
-          aria-label="Voltar para início"
-        >
+        <PrimaryButton inline onClick={() => navigate('/')} className="text-sm" aria-label="Voltar para início">
           <span className="text-xl">←</span>
           <span>Voltar</span>
-        </button>
+        </PrimaryButton>
       </div>
       <h1 className="text-2xl font-bold mb-4">Cadastro de Aluno</h1>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
@@ -119,9 +116,7 @@ export default function CadastroAluno() {
         {error && <p className="text-red-600 text-sm">{error}</p>}
         {ok && <p className="text-green-600 text-sm">{ok}</p>}
 
-        <button disabled={loading} className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-60">
-          {loading ? 'Salvando...' : 'Cadastrar'}
-        </button>
+        <PrimaryButton type="submit" disabled={loading}>{loading ? 'Salvando...' : 'Cadastrar'}</PrimaryButton>
       </form>
     </div>
   )

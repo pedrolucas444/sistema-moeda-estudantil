@@ -1,15 +1,19 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import PrimaryButton from '../components/PrimaryButton'
 
 const Index = () => {
+  const navigate = useNavigate()
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
       <div className="bg-white dark:bg-slate-800 shadow rounded p-8 max-w-md w-full text-center">
         <h1 className="text-3xl font-bold text-blue-600 mb-6">Bem-vindo</h1>
 
         <div className="flex flex-col gap-3">
-          <Link to="/login" className="block w-full bg-blue-600 text-white py-2 rounded">Login</Link>
-          <Link to="/cadastro/aluno" className="block w-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded">Cadastrar Aluno</Link>
+          <PrimaryButton onClick={() => navigate('/login')} className="py-2">Login</PrimaryButton>
+          <PrimaryButton onClick={() => navigate('/cadastro/aluno')} className="py-2 bg-white text-blue-600 border dark:bg-transparent dark:text-slate-200">Cadastrar Aluno</PrimaryButton>
+          <PrimaryButton onClick={() => navigate('/cadastro/empresa')} className="py-2 bg-white text-blue-600 border dark:bg-transparent dark:text-slate-200">Cadastrar Empresa</PrimaryButton>
         </div>
       </div>
     </main>
