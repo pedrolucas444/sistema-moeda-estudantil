@@ -22,7 +22,7 @@ const App = () => (
   <BrowserRouter>
     <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Conteúdo principal (sem header) */}
-      <main className="flex-1 p-6">
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/empresa/vantagens" element={<CadastroVantagemEmpresa />} />

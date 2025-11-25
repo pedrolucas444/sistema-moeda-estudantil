@@ -19,7 +19,6 @@ export default function HubProfessor() {
     <div className="max-w-md mx-auto bg-white dark:bg-slate-900 shadow rounded p-6 text-center">
       <h1 className="text-2xl font-bold mb-6">Área do Professor</h1>
       <div className="flex flex-col gap-3">
-        <PrimaryButton onClick={() => navigate('/')} className="py-3">Ir para Início</PrimaryButton>
         <PrimaryButton onClick={goToExtrato}>Ver Extrato</PrimaryButton>
         <PrimaryButton onClick={() => navigate('/professor/enviar')}>Enviar Moedas</PrimaryButton>
         <PrimaryButton onClick={handleLogout}>Sair</PrimaryButton>

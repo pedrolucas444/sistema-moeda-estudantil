@@ -71,7 +71,7 @@ export default function VantagensResgatadas() {
   if (erro) return <div className="p-6 text-red-600">{erro}</div>
 
   return (
-    <div className="min-h-[80vh] bg-slate-950 text-white py-10 px-4">
+    <div className="min-h-screen bg-slate-950 text-white py-10 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-4">
           <PrimaryButton inline onClick={() => navigate('/aluno/hub')} className="text-sm">

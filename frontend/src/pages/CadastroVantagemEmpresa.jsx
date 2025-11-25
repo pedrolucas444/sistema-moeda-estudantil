@@ -78,7 +78,7 @@ export function CadastroVantagemEmpresa() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh] bg-slate-950 text-white">
+    <div className="flex justify-center items-center min-h-screen bg-slate-950 text-white">
       <div className="bg-slate-900 p-8 rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="mb-4">
           <PrimaryButton inline onClick={() => navigate('/empresa/hub')} className="text-sm" aria-label="Voltar para área da empresa">

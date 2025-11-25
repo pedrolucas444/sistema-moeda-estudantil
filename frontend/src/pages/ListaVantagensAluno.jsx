@@ -64,7 +64,7 @@ export function ListaVantagensAluno() {
 
   if (carregando) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh] bg-slate-950">
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
         <p className="text-slate-200 text-lg">Carregando vantagens...</p>
       </div>
     );
@@ -72,14 +72,14 @@ export function ListaVantagensAluno() {
 
   if (erro) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh] bg-slate-950">
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
         <p className="text-red-400 text-lg">{erro}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[80vh] bg-slate-950 text-white py-10 px-4">
+    <div className="min-h-screen bg-slate-950 text-white py-10 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="mb-4">
           <PrimaryButton inline onClick={() => navigate('/aluno/hub')} className="text-sm" aria-label="Voltar para área do aluno">
