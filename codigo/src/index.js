@@ -4,11 +4,15 @@ const cors = require('cors');
 
 const PostgresAdapter = require('./db/PostgresAdapter');
 
+// Services
+const EmailService = require('./services/EmailService');
+
 // DAOs
 const AlunoDAO = require('./dao/AlunoDAO');
 const EmpresaDAO = require('./dao/EmpresaDAO');
 const VantagemDAO = require('./dao/VantagemDAO');
 const TransacaoDAO = require('./dao/TransacaoDAO');
+const ResgateDAO = require('./dao/ResgateDAO');
 
 // Controllers
 const AlunoController = require('./controllers/AlunoController');
@@ -16,6 +20,7 @@ const EmpresaController = require('./controllers/EmpresaController');
 const VantagemController = require('./controllers/VantagemController');
 const AuthController = require('./controllers/AuthController');
 const TransacaoController = require('./controllers/TransacaoController');
+const ResgateController = require('./controllers/ResgateController');
 
 // Rotas
 const makeAlunoRouter = require('./routes/alunos');
@@ -23,6 +28,7 @@ const makeEmpresaRouter = require('./routes/empresas');
 const makeVantagemRouter = require('./routes/vantagens');
 const makeAuthRouter = require('./routes/auth');
 const makeTransacaoRouter = require('./routes/transacoes');
+const makeResgateRouter = require('./routes/resgates');
 
 async function start() {
   const app = express();
@@ -44,6 +50,10 @@ async function start() {
   const professorDao = new (require('./dao/ProfessorDAO'))(db);
   const vantagemDao = new VantagemDAO(db);
   const transacaoDao = new TransacaoDAO(db);
+  const resgateDao = new ResgateDAO(db);
+
+  // 🔹 Serviço de e-mail (usado no envio de cupons)
+  const emailService = new EmailService();
 
   // 🔹 Instancia Controllers
   const alunoController = new AlunoController(alunoDao);
@@ -56,6 +66,15 @@ async function start() {
     jwtSecret: process.env.JWT_SECRET || 'dev-secret'
   });
   const transacaoController = new TransacaoController({ transacaoDao, db });
+  const resgateController = new ResgateController({
+    db,
+    resgateDao,
+    transacaoDao,
+    alunoDao,
+    vantagemDao,
+    empresaDao,
+    emailService
+  });
 
   // 🔹 Registra Rotas
   app.use('/alunos', makeAlunoRouter(alunoController));
@@ -63,17 +82,18 @@ async function start() {
   app.use('/vantagens', makeVantagemRouter(vantagemController));
   app.use('/auth', makeAuthRouter(authController));
   app.use('/transacoes', makeTransacaoRouter(transacaoController));
+  app.use('/resgates', makeResgateRouter(resgateController));
 
   // Lista de instituições (para popular selects no frontend)
   app.get('/instituicoes', async (req, res) => {
     try {
-      const list = await db.findAll('instituicoes')
-      res.json(list)
+      const list = await db.findAll('instituicoes');
+      res.json(list);
     } catch (err) {
-      console.error('Erro ao buscar instituicoes:', err)
-      res.status(500).json({ error: 'Erro ao buscar instituições' })
+      console.error('Erro ao buscar instituicoes:', err);
+      res.status(500).json({ error: 'Erro ao buscar instituições' });
     }
-  })
+  });
 
   // Rota básica pra testar se o servidor subiu
   app.get('/', (req, res) => {
