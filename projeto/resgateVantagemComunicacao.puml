@@ -1,0 +1,51 @@
+@startuml
+left to right direction
+skinparam linestyle ortho
+skinparam defaultTextAlignment center
+skinparam arrowThickness 1.5
+skinparam nodesep 150
+skinparam ranksep 120
+
+agent "Aluno" as aluno
+agent "Front-End\nAplicação Web" as fe
+agent "TransacaoController\n(API Backend)" as api
+agent "Postgres\nDB" as db
+agent "EmailService\n(Mailer)" as mailer
+
+circle "Start" as start
+
+' ======= FLUXO PRINCIPAL =======
+start --> aluno : 1. selecionarVantagem()\ne clicar em "Resgatar"
+
+aluno --> fe : 2. resgatarVantagem(vantagem_id)
+
+fe --> api : 3. POST /transacoes/resgatar\n{aluno_id, vantagem_id}
+
+' Consultas ao banco - grupo separado
+api --> db : 4. consultarAluno(aluno_id)
+db --> api : 5. dadosAluno
+
+api --> db : 6. consultarVantagem(vantagem_id)
+db --> api : 7. dadosVantagem\n(custo, ativa)
+
+api --> db : 8. consultarSaldo(aluno_id)
+db --> api : 9. saldoAtual
+
+' Validação
+note right of api : 10. validarSaldoEAtivacao()
+
+' Fluxo de SUCESSO (linha reta)
+api --> db : 11. criarResgate(aluno_id,\nvantagem_id)
+db --> api : 12. resgateCriado\n(id, codigo, status)
+
+api --> db : 13. consultarSaldo(aluno_id)\n(saldoAtualizado)
+db --> api : 14. saldoAtualizado
+
+api --> mailer : 15. enviarCupom(aluno,\nvantagem,\ncodigo)
+mailer --> api : 16. envioOk()
+
+api --> fe : 17. retornoSucesso\n{resgate, vantagem,\nsaldoAtualizado}
+
+fe --> aluno : 18. exibirMensagemSucesso()\ne cupom
+
+@enduml

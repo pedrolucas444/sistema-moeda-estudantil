@@ -22,8 +22,9 @@ controller -right-> controller : 6: validarSaldo()
 controller -down-> db : 7: atualizarSaldo(remetente)
 controller -down-> db : 8: atualizarSaldo(destinatario)
 
+' SEPARAÇÃO DAS SETAS
 controller -right-> dao : 9: registrarDebito(remetente_id, valor)
-controller -right-> dao : 10: registrarCredito(destinatario_id, valor)
+controller -down-> dao : 10: registrarCredito(destinatario_id, valor)
 
 controller -right-> email : 11: enviarEmailCupom(destinatario)
 

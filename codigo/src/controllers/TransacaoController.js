@@ -1,7 +1,8 @@
 class TransacaoController {
-  constructor({ transacaoDao, db }) {
+  constructor({ transacaoDao, db, emailService }) {
     this.transacaoDao = transacaoDao;
     this.db = db;
+    this.emailService = emailService;
 
     this.enviarMoedas = this.enviarMoedas.bind(this);
     this.extrato = this.extrato.bind(this);
@@ -78,6 +79,35 @@ class TransacaoController {
       // Busca os saldos atualizados após a inserção das transações
       const remetenteAtualizado = await this.db.findById('usuarios', remetente.id);
       const destinatarioAtualizado = await this.db.findById('usuarios', destinatario.id);
+
+      // Envia e-mails para remetente e destinatário (não bloqueia resposta)
+      try {
+        const valorStr = `${valorInt}`;
+
+        // Email para o professor (remetente)
+        if (remetente.email) {
+          const subject = `Você enviou ${valorStr} moedas`;
+          const text = `Você enviou ${valorStr} moedas para ${destinatario.nome || destinatario.email}.\nSeu novo saldo: ${remetenteAtualizado.saldo}`;
+          this.emailService && this.emailService.sendMail({
+            to: remetente.email,
+            subject,
+            text
+          }).catch((e) => console.error('Erro ao enviar email para remetente:', e));
+        }
+
+        // Email para o aluno (destinatário)
+        if (destinatario.email) {
+          const subject = `Você recebeu ${valorStr} moedas`;
+          const text = `Você recebeu ${valorStr} moedas de ${remetente.nome || remetente.email}.\nSeu novo saldo: ${destinatarioAtualizado.saldo}`;
+          this.emailService && this.emailService.sendMail({
+            to: destinatario.email,
+            subject,
+            text
+          }).catch((e) => console.error('Erro ao enviar email para destinatário:', e));
+        }
+      } catch (err) {
+        console.error('Erro ao tentar notificar por email sobre a transacao:', err);
+      }
 
       return res.status(201).json({
         mensagem: 'Moedas enviadas com sucesso',

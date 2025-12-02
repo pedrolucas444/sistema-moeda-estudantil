@@ -2,52 +2,59 @@ const nodemailer = require('nodemailer');
 
 class EmailService {
   constructor() {
-    // Se tiver SMTP configurado via .env, usa. Se não tiver, vamos usar modo MOCK.
-    const hasSmtp =
-      process.env.SMTP_HOST &&
-      process.env.SMTP_PORT &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS;
+    this._mockedEmails = [];
+    this.mock = false;
 
-    this.mock = !hasSmtp;
-
-    if (!this.mock) {
-      this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
-      });
+    // Determine transport strategy: explicit SMTP, Gmail, or mock
+    try {
+      if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        // Generic SMTP transport
+        this.transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587', 10),
+          secure: (process.env.SMTP_SECURE || 'false') === 'true',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+          }
+        });
+      } else if (process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+        // Gmail transport
+        this.transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_PASS
+          }
+        });
+      } else {
+        // No credentials — run in mock mode
+        this.mock = true;
+        console.warn('EmailService: running in MOCK mode (no SMTP/GMAIL credentials found)');
+      }
+    } catch (err) {
+      console.error('EmailService init error, switching to mock mode:', err);
+      this.mock = true;
     }
 
-    this.from = process.env.EMAIL_FROM || 'MeritCoins <no-reply@meritcoins.com>';
+    this.from = process.env.EMAIL_FROM || process.env.GMAIL_USER || process.env.SMTP_USER || 'no-reply@example.com';
   }
 
   async sendMail({ to, subject, text, html }) {
-    // Modo MOCK: só loga no console e não tenta enviar nada de verdade
-    if (this.mock) {
-      console.log('---------------------------');
-      console.log('[EmailService MOCK]');
-      console.log('Para:', to);
-      console.log('Assunto:', subject);
-      console.log('Texto:', text);
-      console.log('---------------------------');
-      return { mocked: true };
+    if (this.mock || !this.transporter) {
+      const mock = { to, subject, text, html: html || text, from: this.from, date: new Date().toISOString() };
+      this._mockedEmails.push(mock);
+      console.log('EmailService MOCK send:', mock);
+      return mock;
     }
 
-    const mailOptions = {
+    return this.transporter.sendMail({
       from: this.from,
       to,
       subject,
       text,
       html: html || text
-    };
-
-    const info = await this.transporter.sendMail(mailOptions);
-    return info;
+    });
   }
 }
 

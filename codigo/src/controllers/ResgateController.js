@@ -129,8 +129,11 @@ class ResgateController {
         Por favor, valide esse código no momento da troca presencial.
       `.trim();
 
+      // envia email para o aluno (email está no registro `usuarios`)
+      const alunoEmail = (usuarioAluno && usuarioAluno.email) || (aluno && aluno.email) || null;
+      console.log('Resgate: enviando email para aluno:', alunoEmail);
       await this.emailService.sendMail({
-        to: aluno.email,
+        to: alunoEmail,
         subject: `Seu cupom de ${nomeVantagem}`,
         text: textoAluno
       });

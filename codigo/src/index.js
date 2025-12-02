@@ -1,4 +1,7 @@
 // codigo/src/index.js
+// carrega variáveis de ambiente do arquivo .env (se existir)
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 
@@ -54,6 +57,7 @@ async function start() {
 
   // 🔹 Serviço de e-mail (usado no envio de cupons)
   const emailService = new EmailService();
+  console.log(`EmailService mock mode: ${emailService.mock}`);
 
   // 🔹 Instancia Controllers
   const alunoController = new AlunoController(alunoDao);
@@ -65,7 +69,7 @@ async function start() {
     professorDao,
     jwtSecret: process.env.JWT_SECRET || 'dev-secret'
   });
-  const transacaoController = new TransacaoController({ transacaoDao, db });
+  const transacaoController = new TransacaoController({ transacaoDao, db, emailService });
   const resgateController = new ResgateController({
     db,
     resgateDao,
@@ -83,6 +87,28 @@ async function start() {
   app.use('/auth', makeAuthRouter(authController));
   app.use('/transacoes', makeTransacaoRouter(transacaoController));
   app.use('/resgates', makeResgateRouter(resgateController));
+
+  // Endpoint de desenvolvimento para inspecionar emails mock
+  if (process.env.NODE_ENV !== 'production') {
+    app.get('/dev/emails', (req, res) => {
+      try {
+        return res.json(emailService._mockedEmails || []);
+      } catch (err) {
+        console.error('Erro ao acessar emails mock:', err);
+        return res.status(500).json({ error: 'Erro ao acessar emails mock' });
+      }
+    });
+
+    app.delete('/dev/emails', (req, res) => {
+      try {
+        emailService._mockedEmails = [];
+        return res.json({ ok: true });
+      } catch (err) {
+        console.error('Erro ao limpar emails mock:', err);
+        return res.status(500).json({ error: 'Erro ao limpar emails mock' });
+      }
+    });
+  }
 
   // Lista de instituições (para popular selects no frontend)
   app.get('/instituicoes', async (req, res) => {

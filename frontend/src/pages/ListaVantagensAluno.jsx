@@ -47,7 +47,7 @@ export function ListaVantagensAluno() {
     if (!usuarioId) return setErro('Usuário não autenticado')
 
     try {
-      const { data } = await api.post('/transacoes/resgatar', {
+      const { data } = await api.post('/resgates', {
         aluno_id: usuarioId,
         vantagem_id: vantagemId
       })

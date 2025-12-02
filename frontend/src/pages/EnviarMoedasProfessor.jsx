@@ -23,6 +23,7 @@ export default function EnviarMoedasProfessor() {
   const [valor, setValor] = useState('')
   const [descricao, setDescricao] = useState('')
   const [sending, setSending] = useState(false)
+  const [devEmails, setDevEmails] = useState([])
 
   useEffect(() => {
     async function load() {
@@ -73,6 +74,18 @@ export default function EnviarMoedasProfessor() {
       setValor('')
       setDescricao('')
       setSelected(null)
+
+      // Em modo de desenvolvimento o backend armazena emails mock em /dev/emails
+      // Tentamos buscar e mostrar rapidamente para debugging (não existe em produção)
+      try {
+        const { data: emails } = await api.get('/dev/emails')
+        if (Array.isArray(emails) && emails.length) {
+          // mostra os últimos 2 e‑mails gerados
+          setDevEmails(emails.slice(-2).reverse())
+        }
+      } catch (e) {
+        // ignora — rota não existe em produção ou problema de CORS
+      }
     } catch (err) {
       setError(err?.response?.data?.error || 'Falha ao enviar moedas')
     } finally {
@@ -127,6 +140,19 @@ export default function EnviarMoedasProfessor() {
               <PrimaryButton type="button" onClick={() => { setSelected(null); setValor(''); setDescricao(''); }} className="bg-white text-blue-600 border px-4">Limpar</PrimaryButton>
             </div>
           </form>
+          {devEmails.length > 0 && (
+            <div className="mt-4 p-3 border rounded bg-gray-50 text-sm">
+              <div className="font-medium mb-2">E‑mails de debug (modo dev)</div>
+              {devEmails.map((m, idx) => (
+                <div key={idx} className="mb-2">
+                  <div><strong>Para:</strong> {m.to}</div>
+                  <div><strong>Assunto:</strong> {m.subject}</div>
+                  <div className="text-slate-600">{m.text?.slice(0, 200)}</div>
+                </div>
+              ))}
+              <div className="text-xs text-slate-500">Somente visível em ambiente de desenvolvimento.</div>
+            </div>
+          )}
         </div>
       )}
     </div>
