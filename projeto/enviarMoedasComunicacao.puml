@@ -1,0 +1,32 @@
+@startuml
+skinparam linestyle ortho
+
+agent "Professor (Remetente)" as professor
+agent "TransacaoRouter" as router
+agent "TransacaoController" as controller
+agent "TransacaoDAO" as dao
+agent "DB" as db
+agent "EmailService" as email
+circle "Start" as start
+
+start -down-> professor : 1: enviarMoedas(remetente_id,\ndestinatario_id, valor)
+
+professor -right-> router : 2: POST /enviar
+router -right-> controller : 3: enviarMoedas(req)
+
+controller -down-> db : 4: findUsuario(remetente_id)
+controller -down-> db : 5: findUsuario(destinatario_id)
+
+controller -right-> controller : 6: validarSaldo()
+
+controller -down-> db : 7: atualizarSaldo(remetente)
+controller -down-> db : 8: atualizarSaldo(destinatario)
+
+controller -right-> dao : 9: registrarDebito(remetente_id, valor)
+controller -right-> dao : 10: registrarCredito(destinatario_id, valor)
+
+controller -right-> email : 11: enviarEmailCupom(destinatario)
+
+controller -left-> professor : 12: retornoSucesso()
+
+@enduml

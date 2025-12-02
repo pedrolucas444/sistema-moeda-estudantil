@@ -1,0 +1,23 @@
+@startuml
+skinparam linestyle ortho
+
+agent "Empresa" as empresa
+agent "Vantagem" as vantagem
+agent "VantagemRouter" as router
+agent "VantagemController" as controller
+agent "VantagemDAO" as dao
+circle "Start" as start
+
+start -down-> empresa : 1: registrarVantagem(Vantagem)
+
+empresa -right-> vantagem : 2: registrarVantagem()
+vantagem -right-> router : 3: POST /
+router -right-> controller : 4: criar(Vantagem)
+
+controller -down-> controller : 5: validarCampos()
+
+controller -right-> dao : 6: criar(Vantagem)
+
+controller -left-> empresa : 7: retorno(sucesso ou erro)
+
+@enduml

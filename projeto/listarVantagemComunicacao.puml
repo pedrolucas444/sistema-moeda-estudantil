@@ -1,0 +1,21 @@
+@startuml
+skinparam linestyle ortho
+
+agent "Cliente" as cliente
+agent "Vantagem" as vantagem
+agent "VantagemRouter" as router
+agent "VantagemController" as controller
+agent "VantagemDAO" as dao
+circle "Start" as start
+
+start -down-> cliente : 1: listarVantagens()
+
+cliente -right-> vantagem : 2: listarVantagens()
+vantagem -right-> router : 3: GET /listar
+router -right-> controller : 4: listarTodas()
+
+controller -down-> dao : 5: listarTodas()
+
+controller -left-> cliente : 6: retorno(lista ou erro)
+
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+skinparam linestyle ortho
+
+agent "Usuário" as usuario
+agent "TransacaoRouter" as router
+agent "TransacaoController" as controller
+agent "TransacaoDAO" as dao
+agent "DB" as db
+circle "Start" as start
+
+start -down-> usuario : 1: solicitarExtrato(usuarioId)
+
+usuario -right-> router : 2: GET /extrato/{usuarioId}
+router -right-> controller : 3: extrato(usuarioId)
+
+controller -down-> dao : 4: findUsuarioById(usuarioId)
+dao -down-> db : 5: findById('usuarios', usuarioId)
+
+controller -down-> dao : 6: findByUsuarioId(usuarioId)
+dao -down-> db : 7: findAll('transacoes', usuarioId)
+
+controller -left-> usuario : 8: retornarExtrato(usuario,\ntransações)
+
+@enduml
