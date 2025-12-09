@@ -2,17 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 import PrimaryButton from '../components/PrimaryButton'
-
-function decodeTokenId(token) {
-  try {
-    const parts = token.split('.')
-    if (parts.length < 2) return null
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return payload && payload.id
-  } catch {
-    return null
-  }
-}
+import { decodeTokenId } from '../utils/token' // ✅ Importação centralizada
 
 export default function ExtratoAluno() {
   const navigate = useNavigate()
@@ -33,7 +23,7 @@ export default function ExtratoAluno() {
           return
         }
 
-        const usuarioId = decodeTokenId(token)
+        const usuarioId = decodeTokenId(token) // ✅ Uso da função importada
         if (!usuarioId) {
           navigate('/login')
           return
@@ -111,3 +101,4 @@ export default function ExtratoAluno() {
     </div>
   )
 }
+

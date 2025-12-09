@@ -2,17 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom'
 import { api } from "../services/api";
 import PrimaryButton from '../components/PrimaryButton'
-
-function decodeTokenId(token) {
-  try {
-    const parts = token.split('.')
-    if (parts.length < 2) return null
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return payload && payload.id
-  } catch {
-    return null
-  }
-}
+import { decodeTokenId } from '../utils/token' // ✅ Importação centralizada
 
 export function ListaVantagensAluno() {
   const navigate = useNavigate()
@@ -40,7 +30,7 @@ export function ListaVantagensAluno() {
     carregar();
   }, []);
 
-  const usuarioId = decodeTokenId(localStorage.getItem('token'))
+  const usuarioId = decodeTokenId(localStorage.getItem('token')) // ✅ Uso da função importada
 
   async function handleResgatar(vantagemId) {
     setErro(null)
@@ -138,3 +128,4 @@ export function ListaVantagensAluno() {
     </div>
   );
 }
+

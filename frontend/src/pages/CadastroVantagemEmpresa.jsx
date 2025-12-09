@@ -2,17 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom'
 import { api } from "../services/api";
 import PrimaryButton from '../components/PrimaryButton'
-
-function decodeTokenId(token) {
-  try {
-    const parts = token.split('.')
-    if (parts.length < 2) return null
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return payload && payload.id
-  } catch {
-    return null
-  }
-}
+import { decodeTokenId } from '../utils/token' // ✅ Importação centralizada
 
 export function CadastroVantagemEmpresa() {
   const navigate = useNavigate()
@@ -32,7 +22,7 @@ export function CadastroVantagemEmpresa() {
       return
     }
 
-    const id = decodeTokenId(token)
+    const id = decodeTokenId(token) // ✅ Uso da função importada
     if (id) setForm((prev) => ({ ...prev, empresa_id: id }))
   }, [navigate])
 
@@ -159,3 +149,4 @@ export function CadastroVantagemEmpresa() {
     </div>
   );
 }
+
