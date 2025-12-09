@@ -1,251 +1,189 @@
+const { validateRequiredFields, validatePositiveInteger } = require('../utils/validators');
+const { errorResponse, successResponse, asyncHandler } = require('../utils/httpResponse');
+const { findEntityOrFail, normalizeSaldo, validateSaldoSuficiente } = require('../utils/entityHelpers');
+
 class TransacaoController {
   constructor({ transacaoDao, db, emailService }) {
     this.transacaoDao = transacaoDao;
     this.db = db;
     this.emailService = emailService;
 
-    this.enviarMoedas = this.enviarMoedas.bind(this);
-    this.extrato = this.extrato.bind(this);
-    this.resgatarVantagem = this.resgatarVantagem.bind(this);
+    // Aplicar asyncHandler em todos os métodos
+    this.enviarMoedas = asyncHandler(this.enviarMoedas.bind(this));
+    this.extrato = asyncHandler(this.extrato.bind(this));
+    this.resgatarVantagem = asyncHandler(this.resgatarVantagem.bind(this));
   }
 
   async enviarMoedas(req, res) {
-    try {
-      const { remetente_id, destinatario_id, valor, descricao } =
-        req.body || {};
+    const { remetente_id, destinatario_id, valor, descricao } = req.body || {};
 
-      if (!remetente_id || !destinatario_id || valor == null) {
-        return res.status(400).json({
-          error: 'remetente_id, destinatario_id e valor são obrigatórios'
-        });
-      }
-
-      const valorInt = parseInt(valor, 10);
-      if (!Number.isInteger(valorInt) || valorInt <= 0) {
-        return res
-          .status(400)
-          .json({ error: 'valor deve ser um inteiro positivo' });
-      }
-
-      const remetente = await this.db.findById('usuarios', remetente_id);
-      if (!remetente) {
-        return res.status(404).json({ error: 'Remetente não encontrado' });
-      }
-
-      const destinatario = await this.db.findById(
-        'usuarios',
-        destinatario_id
-      );
-      if (!destinatario) {
-        return res
-          .status(404)
-          .json({ error: 'Destinatário não encontrado' });
-      }
-
-      const saldoRemetente =
-        typeof remetente.saldo === 'number'
-          ? remetente.saldo
-          : parseInt(remetente.saldo || 0, 10);
-
-      const saldoDestinatario =
-        typeof destinatario.saldo === 'number'
-          ? destinatario.saldo
-          : parseInt(destinatario.saldo || 0, 10);
-
-      if (saldoRemetente < valorInt) {
-        return res.status(400).json({ error: 'Saldo insuficiente' });
-      }
-
-      // Há triggers no banco que atualizam o saldo quando uma
-      // transação é inserida (ver `tg_transacao_ins` em
-      // codigo/db/functions_triggers.sql). Para evitar a
-      // aplicação dupla da dedução/crédito (atualização manual
-      // + trigger), não atualizamos o saldo aqui.
-
-      // Insere as transações (débito do remetente e crédito do
-      // destinatário). O trigger atualizará os saldos.
-      const debitoProf = await this.transacaoDao.create({
-        usuario_id: remetente.id,
-        valor: -valorInt,
-        descricao: descricao || 'Envio de moedas'
-      });
-
-      const creditoAluno = await this.transacaoDao.create({
-        usuario_id: destinatario.id,
-        valor: valorInt,
-        descricao: descricao || 'Recebimento de moedas'
-      });
-
-      // Busca os saldos atualizados após a inserção das transações
-      const remetenteAtualizado = await this.db.findById('usuarios', remetente.id);
-      const destinatarioAtualizado = await this.db.findById('usuarios', destinatario.id);
-
-      // Envia e-mails para remetente e destinatário (não bloqueia resposta)
-      try {
-        const valorStr = `${valorInt}`;
-
-        // Email para o professor (remetente)
-        if (remetente.email) {
-          const subject = `Você enviou ${valorStr} moedas`;
-          const text = `Você enviou ${valorStr} moedas para ${destinatario.nome || destinatario.email}.\nSeu novo saldo: ${remetenteAtualizado.saldo}`;
-          this.emailService && this.emailService.sendMail({
-            to: remetente.email,
-            subject,
-            text
-          }).catch((e) => console.error('Erro ao enviar email para remetente:', e));
-        }
-
-        // Email para o aluno (destinatário)
-        if (destinatario.email) {
-          const subject = `Você recebeu ${valorStr} moedas`;
-          const text = `Você recebeu ${valorStr} moedas de ${remetente.nome || remetente.email}.\nSeu novo saldo: ${destinatarioAtualizado.saldo}`;
-          this.emailService && this.emailService.sendMail({
-            to: destinatario.email,
-            subject,
-            text
-          }).catch((e) => console.error('Erro ao enviar email para destinatário:', e));
-        }
-      } catch (err) {
-        console.error('Erro ao tentar notificar por email sobre a transacao:', err);
-      }
-
-      return res.status(201).json({
-        mensagem: 'Moedas enviadas com sucesso',
-        remetente: {
-          id: remetenteAtualizado.id,
-          saldo: remetenteAtualizado.saldo
-        },
-        destinatario: {
-          id: destinatarioAtualizado.id,
-          saldo: destinatarioAtualizado.saldo
-        },
-        transacoes: {
-          debitoProf,
-          creditoAluno
-        }
-      });
-    } catch (err) {
-      console.error('Erro ao enviar moedas:', err);
-      return res
-        .status(500)
-        .json({ error: 'Erro interno ao enviar moedas' });
+    // Validação centralizada
+    const requiredValidation = validateRequiredFields(
+      req.body,
+      ['remetente_id', 'destinatario_id', 'valor']
+    );
+    if (!requiredValidation.valid) {
+      return errorResponse(res, 400, requiredValidation.error);
     }
+
+    const valorValidation = validatePositiveInteger(valor, 'valor');
+    if (!valorValidation.valid) {
+      return errorResponse(res, 400, valorValidation.error);
+    }
+    const valorInt = valorValidation.value;
+
+    // Busca de entidades com helper
+    const remetente = await findEntityOrFail(
+      this.db, 'usuarios', remetente_id, 'Remetente'
+    );
+    const destinatario = await findEntityOrFail(
+      this.db, 'usuarios', destinatario_id, 'Destinatário'
+    );
+
+    // Validação de saldo com helper
+    const saldoRemetente = normalizeSaldo(remetente.saldo);
+    validateSaldoSuficiente(saldoRemetente, valorInt);
+
+    // Lógica de negócio (sem validações)
+    const debitoProf = await this.transacaoDao.create({
+      usuario_id: remetente.id,
+      valor: -valorInt,
+      descricao: descricao || 'Envio de moedas'
+    });
+
+    const creditoAluno = await this.transacaoDao.create({
+      usuario_id: destinatario.id,
+      valor: valorInt,
+      descricao: descricao || 'Recebimento de moedas'
+    });
+
+    // Busca saldos atualizados
+    const remetenteAtualizado = await this.db.findById('usuarios', remetente.id);
+    const destinatarioAtualizado = await this.db.findById('usuarios', destinatario.id);
+
+    // Envio de emails (não bloqueia)
+    this._enviarEmailsNotificacao(remetente, destinatario, remetenteAtualizado, destinatarioAtualizado, valorInt);
+
+    // Resposta padronizada
+    return successResponse(res, 201, {
+      mensagem: 'Moedas enviadas com sucesso',
+      remetente: {
+        id: remetenteAtualizado.id,
+        saldo: remetenteAtualizado.saldo
+      },
+      destinatario: {
+        id: destinatarioAtualizado.id,
+        saldo: destinatarioAtualizado.saldo
+      },
+      transacoes: {
+        debitoProf,
+        creditoAluno
+      }
+    });
   }
 
   async extrato(req, res) {
-    try {
-      const { usuarioId } = req.params;
+    const { usuarioId } = req.params;
 
-      const usuario = await this.db.findById('usuarios', usuarioId);
-      if (!usuario) {
-        return res.status(404).json({ error: 'Usuário não encontrado' });
-      }
+    // Busca com helper (já lança erro se não encontrado)
+    const usuario = await findEntityOrFail(
+      this.db, 'usuarios', usuarioId, 'Usuário'
+    );
 
-      const transacoes = await this.transacaoDao.findByUsuarioId(usuarioId);
+    const transacoes = await this.transacaoDao.findByUsuarioId(usuarioId);
 
-      return res.json({
-        usuario,
-        transacoes
-      });
-    } catch (err) {
-      console.error('Erro ao buscar extrato:', err);
-      return res
-        .status(500)
-        .json({ error: 'Erro interno ao consultar extrato' });
-    }
+    return successResponse(res, 200, {
+      usuario,
+      transacoes
+    });
   }
 
   async resgatarVantagem(req, res) {
+    const { aluno_id, vantagem_id } = req.body || {};
+
+    // Validação centralizada
+    const requiredValidation = validateRequiredFields(
+      req.body,
+      ['aluno_id', 'vantagem_id']
+    );
+    if (!requiredValidation.valid) {
+      return errorResponse(res, 400, requiredValidation.error);
+    }
+
+    // Busca de entidades com helper
+    const aluno = await findEntityOrFail(
+      this.db, 'alunos', aluno_id, 'Aluno'
+    );
+    const vantagem = await findEntityOrFail(
+      this.db, 'vantagens', vantagem_id, 'Vantagem'
+    );
+
+    if (vantagem.ativa === false) {
+      return errorResponse(res, 400, 'Vantagem inativa, não pode ser resgatada');
+    }
+
+    const usuarioAluno = await findEntityOrFail(
+      this.db, 'usuarios', aluno_id, 'Usuário do aluno'
+    );
+
+    // Validação de saldo com helper
+    const saldoAtual = normalizeSaldo(usuarioAluno.saldo);
+    const custoValidation = validatePositiveInteger(vantagem.custo_moedas, 'Custo da vantagem');
+    if (!custoValidation.valid) {
+      return errorResponse(res, 400, 'Custo da vantagem inválido no cadastro');
+    }
+    const custo = custoValidation.value;
+
+    validateSaldoSuficiente(saldoAtual, custo);
+
+    // Lógica de negócio
+    const resgate = await this.db.insert('resgates', {
+      aluno_id,
+      vantagem_id
+    });
+
+    const usuarioAtualizado = await this.db.findById('usuarios', aluno_id);
+
+    return successResponse(res, 201, {
+      mensagem: 'Vantagem resgatada com sucesso',
+      aluno: {
+        id: aluno_id,
+        saldo: usuarioAtualizado ? usuarioAtualizado.saldo : saldoAtual - custo
+      },
+      vantagem: {
+        id: vantagem.id,
+        titulo: vantagem.titulo,
+        custo_moedas: custo
+      },
+      resgate
+    });
+  }
+
+  // Método privado para envio de emails
+  _enviarEmailsNotificacao(remetente, destinatario, remetenteAtualizado, destinatarioAtualizado, valorInt) {
     try {
-      const { aluno_id, vantagem_id } = req.body || {};
+      const valorStr = `${valorInt}`;
 
-      if (!aluno_id || !vantagem_id) {
-        return res
-          .status(400)
-          .json({ error: 'aluno_id e vantagem_id são obrigatórios' });
+      if (remetente.email) {
+        this.emailService && this.emailService.sendMail({
+          to: remetente.email,
+          subject: `Você enviou ${valorStr} moedas`,
+          text: `Você enviou ${valorStr} moedas para ${destinatario.nome || destinatario.email}.\nSeu novo saldo: ${remetenteAtualizado.saldo}`
+        }).catch(e => console.error('Erro ao enviar email para remetente:', e));
       }
 
-      const aluno = await this.db.findById('alunos', aluno_id);
-      if (!aluno) {
-        return res.status(404).json({ error: 'Aluno não encontrado' });
+      if (destinatario.email) {
+        this.emailService && this.emailService.sendMail({
+          to: destinatario.email,
+          subject: `Você recebeu ${valorStr} moedas`,
+          text: `Você recebeu ${valorStr} moedas de ${remetente.nome || remetente.email}.\nSeu novo saldo: ${destinatarioAtualizado.saldo}`
+        }).catch(e => console.error('Erro ao enviar email para destinatário:', e));
       }
-
-      const vantagem = await this.db.findById('vantagens', vantagem_id);
-      if (!vantagem) {
-        return res.status(404).json({ error: 'Vantagem não encontrada' });
-      }
-      if (vantagem.ativa === false) {
-        return res
-          .status(400)
-          .json({ error: 'Vantagem inativa, não pode ser resgatada' });
-      }
-
-      
-      const usuarioAluno = await this.db.findById('usuarios', aluno_id);
-      if (!usuarioAluno) {
-        return res
-          .status(404)
-          .json({ error: 'Usuário do aluno não encontrado' });
-      }
-
-      const saldoAtual =
-        typeof usuarioAluno.saldo === 'number'
-          ? usuarioAluno.saldo
-          : parseInt(usuarioAluno.saldo || 0, 10);
-
-      const custo = parseInt(vantagem.custo_moedas, 10);
-
-      if (!Number.isInteger(custo) || custo <= 0) {
-        return res
-          .status(400)
-          .json({ error: 'Custo da vantagem inválido no cadastro' });
-      }
-
-      if (saldoAtual < custo) {
-        return res
-          .status(400)
-          .json({ error: 'Saldo insuficiente para resgatar a vantagem' });
-      }
-
-      const resgate = await this.db.insert('resgates', {
-        aluno_id,
-        vantagem_id
-      });
-
-      const usuarioAtualizado = await this.db.findById('usuarios', aluno_id);
-
-      return res.status(201).json({
-        mensagem: 'Vantagem resgatada com sucesso',
-        aluno: {
-          id: aluno_id,
-          saldo: usuarioAtualizado
-            ? usuarioAtualizado.saldo
-            : saldoAtual - custo
-        },
-        vantagem: {
-          id: vantagem.id,
-          titulo: vantagem.titulo,
-          custo_moedas: custo
-        },
-        resgate
-      });
     } catch (err) {
-      console.error('Erro ao resgatar vantagem:', err);
-
-      if (
-        err.message &&
-        err.message.includes('Saldo insuficiente para efetuar a operação')
-      ) {
-        return res
-          .status(400)
-          .json({ error: 'Saldo insuficiente para resgatar a vantagem' });
-      }
-
-      return res
-        .status(500)
-        .json({ error: 'Erro interno ao resgatar vantagem' });
+      console.error('Erro ao tentar notificar por email sobre a transacao:', err);
     }
   }
 }
 
 module.exports = TransacaoController;
+
